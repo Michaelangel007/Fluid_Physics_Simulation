@@ -25,7 +25,11 @@ Window :: Window(int w, int h) {
 
     glfwSwapInterval(1);
 
+#if USE_CPP_IOSTREAM
     if (glewInit() != GLEW_OK) std::cout << "Error!" << std::endl;
+#else
+    if (glewInit() != GLEW_OK) printf( "Error!\n" );
+#endif
 }
 
 void Window::drawBoundary(int object_Location, int color_Location) {

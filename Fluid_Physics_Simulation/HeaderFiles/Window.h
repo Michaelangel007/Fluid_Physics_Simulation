@@ -1,8 +1,12 @@
 #pragma once
+#define USE_CPP_IOSTREAM 1
+#if USE_CPP_IOSTREAM
+	#include <iostream>
+	#include <iomanip>
+#endif
 #include <GL/glew.h>
-#include<GLFW/glfw3.h>
-#include<iostream>
-#include<vector>
+#include <GLFW/glfw3.h>
+#include <vector>
 
 class Window {
 public:
