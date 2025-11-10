@@ -8,6 +8,8 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 
+extern const char  *APP_NAME;
+
 class Window {
 public:
 	GLFWwindow* win;

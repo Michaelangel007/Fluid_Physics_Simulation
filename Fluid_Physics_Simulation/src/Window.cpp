@@ -13,7 +13,7 @@ Window :: Window(int w, int h, bool waitVSync) {
     aspectRatio = (float)width / (float)height;
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(width, height, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(width, height, APP_NAME, NULL, NULL);
     if (!window)
     {
         glfwTerminate();

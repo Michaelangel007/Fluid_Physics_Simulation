@@ -5,7 +5,7 @@
 #include <cmath>
 #include <limits> // MAX_INT
 
-static const char  *APP_NAME     = "Fluid Physics Simulation";
+       const char  *APP_NAME     = "Fluid Physics Simulation";
 static const char  *APP_VERSION  = "Version 1.1";
 
 // Configuration
