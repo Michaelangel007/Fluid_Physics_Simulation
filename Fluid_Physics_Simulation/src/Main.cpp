@@ -257,6 +257,9 @@ int main(int numArgs, const char *aArgs[])
         if (numLastPhysicsSeconds > 0.0 && (elapsed >= numLastPhysicsSeconds)) break;
     }
 
+    if (elapsed < 1e-6)
+        elapsed = 1e-6; // Alt.: std::numeric_limits<float>::infinity();
+
     double frames  = (double)numFrame; // frames
     double avgFPS  = frames / elapsed; // frames/second
     double avgFTms = (1.0 / avgFPS) * 1000.0; // ms
