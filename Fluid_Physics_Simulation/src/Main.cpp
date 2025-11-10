@@ -274,6 +274,10 @@ int main(int numArgs, const char *aArgs[])
     printf( "Total Frames: %d / Total Elapsed: %7.3f s = Avg FPS: %7.3f, Avg Frametime: %7.3f ms \n", numFrame, elapsed , avgFPS, avgFTms );
 #endif
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
     glDeleteProgram(shader);
 
     glfwTerminate();
