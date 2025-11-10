@@ -40,8 +40,8 @@ void usage()
     const char *HELP =
 "-?              Display command line options and quit.\n"
 "--help          Alias for -?.\n"
-"-benchmark      Run simulation for 3 minutes (~10,800 frames @ 60fps), render first frame at frame number 7,200.\n";
-"-benchfast      Run simulation for 10 seconds (~600 frames @ 60fps), render first frame at frame number 300.\n";
+"-benchmark      Run simulation for 3 minutes (~10,800 frames @ 60fps), render first frame at frame number 7,200.\n"
+"-benchfast      Run simulation for 10 seconds (~600 frames @ 60fps), render first frame at frame number 300.\n"
 "-render #       Don't render until specified frame number. -1 is never render. (Default 0).\n"
 "-time   #.##    Run simulation for specified seconds.\n"
 "-v              Verbose mode off (default).\n"
@@ -54,7 +54,7 @@ void usage()
 #if USE_CPP_IOSTREAM
     std::cout << HELP;
 #else
-    printf( help );
+    printf( HELP );
 #endif
 }
 
