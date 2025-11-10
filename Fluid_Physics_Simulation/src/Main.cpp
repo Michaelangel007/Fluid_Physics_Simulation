@@ -226,7 +226,8 @@ int main(int numArgs, const char *aArgs[])
 
         Window::drawBoundary(object_Location, color_Location);
         bool bDraw = (numFrame >= numFirstRenderFrame);
-        Particle::drawElements(window, object_Location, color_Location, bDraw);
+        Particle::updateElements(object_Location, color_Location);
+        Particle::drawElements(object_Location, color_Location, bDraw, numFrame);
 
         //calculate fps
         numFrame++;

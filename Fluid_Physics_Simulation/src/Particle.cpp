@@ -208,15 +208,17 @@ glm::vec3 velToColor(Particle p) {
     return color;
 }
 
-void Particle::drawElements(Window window, int object_Location, int color_Location, bool bDraw) {
+void Particle::drawElements(int object_Location, int color_Location, bool bDraw,int frame) {
     if (bDraw)
     {
+        int offset = centers.size() / 2 * (segments + 2);
+
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, 2 * centers.size() / 2 * (segments + 2) * sizeof(float), positions.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, 2 * offset * sizeof(float), positions.data(), GL_DYNAMIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * centers.size() / 2 * (segments + 2) * sizeof(unsigned int), indices.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * offset * sizeof(unsigned int), indices.data(), GL_DYNAMIC_DRAW);
 
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
         glEnableVertexAttribArray(0);
@@ -224,16 +226,17 @@ void Particle::drawElements(Window window, int object_Location, int color_Locati
         // Draw Loop
         for (int i = 0; i < particles.size(); ++i) {
             Particle& p = particles[i];
-            glm::vec3 translate = glm::vec3(0.0f);
             glm::vec3 color = velToColor(p);
 
-            glUniform4f(object_Location, p.pos.x+translate.x ,p.pos.y+translate.y , translate.z, 0.0f);
+            glUniform4f(object_Location, p.pos.x, p.pos.y, 0.0, 0.0f);
             glUniform3f(color_Location, color.r, color.g, color.b);
 
             glDrawElements(GL_TRIANGLES, 3 * segments, GL_UNSIGNED_INT, (void*)(i * 3 * segments * sizeof(unsigned int)));
         }
     }
+}
 
+void Particle::updateElements(int object_Location, int color_Location) {
     // change position and cell
     for (int i = 0; i < particles.size(); ++i) {
         Particle& p = particles[i];
@@ -251,22 +254,19 @@ void Particle::drawElements(Window window, int object_Location, int color_Locati
     }
     
     // calculate densities
-    for (int i = 0; i < particles.size(); ++i) calcuateDensities(i);
+    for (int i = 0; i < particles.size(); ++i) {
+        calcuateDensities(i);
+    }
 
     // apply pressure force
     for (int i = 0; i < particles.size(); ++i) {
         Particle& p = particles[i];
         float dens = std::max(particles[i].density, 1e-4f);
         p.acceleration = pressure(i) / dens;
-        p.acceleration.y -= 200.0f;
+        p.acceleration.y -= GRAVITY_MAGNITUDE;
         p.velocity += stepSize * p.acceleration;
         float velMag = glm::length(p.velocity);
         // velocity clamp
-        if (velMag > 15.0f) p.velocity = 15.0f * p.velocity / velMag;
+        if (velMag > MAX_SPEED) p.velocity = MAX_SPEED * p.velocity / velMag;
     }
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
 }
-
