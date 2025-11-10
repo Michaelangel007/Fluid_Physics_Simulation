@@ -12,6 +12,9 @@ unsigned int Particle::vao = 0;
 unsigned int Particle::vbo = 0;
 unsigned int Particle::ibo = 0;
 
+float MAX_SPEED = 15.0f;
+float GRAVITY_MAGNITUDE = 200.0f;
+
 void checkBoundary(Particle& p) {
     float r = Particle::radius;
     // check left
@@ -199,7 +202,7 @@ glm::vec3 Particle::viscosity(int idx, std::vector<Particle> neighbors) {
 
 glm::vec3 velToColor(Particle p) {
     float speed = glm::length(p.velocity);
-    float scale = speed / 15.0f;
+    float scale = std::min( speed / MAX_SPEED, 1.f ); // Clamp color to 0.0 .. 1.0
     glm::vec3 color = glm::vec3(0.0f);
     color.r = scale;
     color.g = 1.0f - std::abs(scale - 0.5f);
