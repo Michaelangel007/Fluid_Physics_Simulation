@@ -11,6 +11,7 @@ static const char  *APP_VERSION  = "Version 1.1";
 // Configuration
 static bool   benchmark             = false;
 static bool   verbose               = false;
+static bool   vsync                 = true;
 static int    numFirstRenderFrame   = 0;
 static double numLastPhysicsSeconds = 0.0;
 
@@ -146,6 +147,10 @@ void parseCommandLine(int nArgs, const char* aArgs[])
                 exit(0);
             }
             else
+            if (strcmp(pArg, "-vsync") == 0) {
+                vsync = false;
+            }
+            else
             if (strcmp(pArg, "--version") == 0) {
                 verbose = false;
             }
@@ -155,6 +160,10 @@ void parseCommandLine(int nArgs, const char* aArgs[])
         {
             if (strcmp(pArg, "+v") == 0) {
                 verbose = true;
+            }
+            else
+            if (strcmp(pArg, "+vsync") == 0) {
+                vsync = true;
             }
         }
 
@@ -166,7 +175,7 @@ int main(int numArgs, const char *aArgs[])
 {
     parseCommandLine( numArgs, aArgs );
 
-    Window window(1600, 1000);
+    Window window(1600, 1000, vsync);
     
     // Generating Buffers
     glGenVertexArrays(1, &Window::vao);

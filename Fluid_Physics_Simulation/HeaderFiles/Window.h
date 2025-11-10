@@ -17,6 +17,6 @@ public:
 	static unsigned int vbo;
 	static unsigned int vao;
 	static std::vector<float> recData;
-	Window(int w, int h);
+	Window(int w, int h, bool waitVSnyc = true);
 	static void drawBoundary(int object_Location, int color_Location);
 };
