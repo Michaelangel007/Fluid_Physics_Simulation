@@ -1,7 +1,7 @@
 #include "../HeaderFiles/Window.h"
 
 //Defining static members
-unsigned int Window::vao = 0;
+GLuint Window::vao = 0;
 unsigned int Window::vbo = 0;
 
 Window :: Window(int w, int h, bool waitVSync) {
@@ -28,11 +28,26 @@ Window :: Window(int w, int h, bool waitVSync) {
     else
         glfwSwapInterval(0);
 
+    const char *vendor     = (const char*) glGetString( GL_VENDOR  );
+    const char *version    = (const char*) glGetString( GL_VERSION );
+    const char *ERROR = "ERROR: Couldn't init glew.\n";
+    bool glewFail = glewInit() != GLEW_OK;
+    {
 #if USE_CPP_IOSTREAM
-    if (glewInit() != GLEW_OK) std::cout << "Error!" << std::endl;
+        if (glewFail)
+            std::cerr << ERROR;
+        else
+            std::cout
+                << "OpenGL Version: " << version << std::endl
+                << "OpenGL Vendor: "  << vendor  << std::endl;
 #else
-    if (glewInit() != GLEW_OK) printf( "Error!\n" );
+        if (glewFail)
+            fprintf( stderr, ERROR );
+        else
+            printf( "OpenGL Version: %s\nOpenGL Vendor: %s\n", version, vendor );
 #endif
+    }
+
 }
 
 void Window::drawBoundary(int object_Location, int color_Location) {
