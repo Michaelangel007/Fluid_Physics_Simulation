@@ -14,6 +14,8 @@ static bool   verbose               = false;
 static bool   vsync                 = true;
 static int    numFirstRenderFrame   = 0;
 static double numLastPhysicsSeconds = 0.0;
+static int    width = 25;
+static int    height = 20;
 
 // Defining static variables 
 std::vector <float> Window::recData = {
@@ -43,6 +45,8 @@ void usage()
 "--help          Alias for -?.\n"
 "-benchmark      Run simulation for 3 minutes (~10,800 frames @ 60fps), render first frame at frame number 7,200.\n"
 "-benchfast      Run simulation for 10 seconds (~600 frames @ 60fps), render first frame at frame number 300.\n"
+"-h              Specifiy grid height (rows).\n"
+"-height         Alias for -h.\n"
 "-render #       Don't render until specified frame number. -1 is never render. (Default 0).\n"
 "-time   #.##    Run simulation for specified seconds.\n"
 "-v              Verbose mode off (default).\n"
@@ -51,6 +55,8 @@ void usage()
 "--version       Alias for -V.\n"
 "-vsync          VSync off.\n"
 "+vsync          VSync on (default).\n"
+"-w              Specify grid width (columns).\n"
+"-width          Alias for -w.\n"
     ;
 #if USE_CPP_IOSTREAM
     std::cout << HELP;
@@ -80,12 +86,8 @@ void parseCommandLine(int nArgs, const char* aArgs[])
         pArg = aArgs[ iArg ];
         if (pArg[0] == '-')
         {
-            if (strcmp(pArg, "-?") == 0) {
-                usage();
-                exit(0);
-            }
-            else
-            if (strcmp(pArg, "--help") == 0) {
+            if ((strcmp(pArg, "-?"    ) == 0)
+            ||  (strcmp(pArg, "--help") == 0)) {
                 usage();
                 exit(0);
             }
@@ -100,6 +102,42 @@ void parseCommandLine(int nArgs, const char* aArgs[])
                 numFirstRenderFrame   = 5 * 60; // 5 s * 60 frames/s = 300 frames
                 numLastPhysicsSeconds = 10.0; // 10 s
                 benchmark = true;
+            }
+            else
+            if ((strcmp(pArg, "-h"     ) == 0)
+            ||  (strcmp(pArg, "-height") == 0)) {
+                iArg++;
+                if (iArg >= nArgs) {
+                    const char *ERROR = "ERROR: Grid height not specified.\ni.e.\n    -height 25\n";
+#if USE_CPP_IOSTREAM
+                    std::cout << ERROR;
+#else
+                    printf( ERROR );
+#endif
+                    exit(1);
+                }
+                pArg = aArgs[ iArg ];
+                height = atoi( pArg );
+                if (height < 1)
+                    height = 1;
+            }
+            else
+            if ((strcmp(pArg, "-w"    ) == 0)
+            ||  (strcmp(pArg, "-width") == 0)) {
+                iArg++;
+                if (iArg >= nArgs) {
+                    const char *ERROR = "ERROR: Grid width not specified.\ni.e.\n    -width 20\n";
+#if USE_CPP_IOSTREAM
+                    std::cout << ERROR;
+#else
+                    printf( ERROR );
+#endif
+                    exit(1);
+                }
+                pArg = aArgs[ iArg ];
+                width = atoi( pArg );
+                if (width < 1)
+                    width = 1;
             }
             else
             if (strcmp(pArg, "-render") == 0) {
@@ -185,7 +223,7 @@ int main(int numArgs, const char *aArgs[])
     glGenBuffers(1, &Particle::vbo);
     glGenBuffers(1, &Particle::ibo);
 
-    Particle::generateGridCenters(20, 25); // generate grid / random particles
+    Particle::generateGridCenters(height, width); // generate grid / random particles
     Particle::populate(window.aspectRatio); // create particles using center positions
 
     // creating and compiling shaders
