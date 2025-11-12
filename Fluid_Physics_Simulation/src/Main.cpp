@@ -11,6 +11,7 @@ static const char  *APP_VERSION  = "Version 1.1";
 
 // Configuration
 static bool   benchmark             = false;
+static bool   pauseAtEnd            = false;
 static bool   verbose               = false;
 static bool   vsync                 = true;
 static int    numFirstRenderFrame   = 0;
@@ -37,6 +38,7 @@ void usage()
 "-benchfast      Run simulation for 10 seconds (~600 frames @ 60fps), render first frame at frame number 300.\n"
 "-h              Specifiy grid height (rows).\n"
 "-height         Alias for -h.\n"
+"-pause          Pause at end of simulation waiting for RETURN.\n"
 "-render #       Don't render until specified frame number. -1 is never render. (Default 0).\n"
 "-time   #.##    Run simulation for specified seconds.\n"
 "-v              Verbose mode off (default).\n"
@@ -110,6 +112,10 @@ void parseCommandLine(int nArgs, const char* aArgs[])
                 height = atoi( pArg );
                 if (height < 1)
                     height = 1;
+            }
+            else
+            if (strcmp(pArg, "-pause") == 0) {
+                pauseAtEnd = true;
             }
             else
             if ((strcmp(pArg, "-w"    ) == 0)
@@ -325,6 +331,15 @@ int main(int numArgs, const char *aArgs[])
     #endif
 
 #endif
+
+    if( pauseAtEnd ) {
+#if USE_CPP_IOSTREAM
+        std::cout << "Done.\n";
+#else
+        printf( "Done.\n" );
+#endif
+        getchar();
+    }
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
