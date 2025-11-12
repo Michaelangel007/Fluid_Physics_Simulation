@@ -28,17 +28,6 @@ std::vector <float> Window::recData = {
 
 std::vector <float> Particle::centers = {};
 
-int Particle::segments = 16;
-float Particle::spacing = 0.005f;
-float Particle::stepSize = 0.0005f;
-int Particle::numOfParticles = 2000;
-float Particle::radius = 0.008f;
-float Particle::s_Radius = 0.05f;
-float Particle::targetDensity = 400.0f;
-float Particle::pressureMultiplier = 200.0f;
-float Particle::nearPressureMultiplier = 1000.0f;
-float Particle::viscosityMultiplier = 0.0002f;
-
 void usage()
 {
     const char *HELP =
@@ -212,6 +201,7 @@ void parseCommandLine(int nArgs, const char* aArgs[])
 
 int main(int numArgs, const char *aArgs[])
 {
+    g_ParticleParameters.initParticleParameters();
     parseCommandLine( numArgs, aArgs );
 
     Window window(1600, 1000, vsync);
