@@ -1,12 +1,5 @@
 #pragma once
-#define USE_CPP_IOSTREAM 1
-#if USE_CPP_IOSTREAM
-	#include <iostream>
-	#include <iomanip>
-#endif
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <vector>
+#include "../HeaderFiles/Common.h"
 
 extern const char  *APP_NAME;
 
