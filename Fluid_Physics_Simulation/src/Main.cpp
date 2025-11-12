@@ -188,6 +188,13 @@ void parseCommandLine(int nArgs, const char* aArgs[])
             if (strcmp(pArg, "--version") == 0) {
                 verbose = false;
             }
+            else {
+#if USE_CPP_IOSTREAM
+                std::cout << "Warning: Skipping unknown argument: " << pArg << std::endl;
+#else
+                printf( "Warning: Skipping unknown argument: %s\n", pArg );
+#endif
+            }
         }
         else
         if (pArg[0] == '+')
