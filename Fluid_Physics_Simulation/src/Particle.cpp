@@ -232,7 +232,7 @@ glm::vec3 Particle::pressure(int idx) {
     return force + viscosity(idx, neighbors);
 }
 
-void Particle::calcuateDensities(int idx) {
+void Particle::calculateDensities(int idx) {
     float density = 0.0f;
     float nearDensity = 0.0f;
     Particle& p = particles[idx];
@@ -324,7 +324,7 @@ void Particle::updateElements(int object_Location, int color_Location) {
     
     // calculate densities
     for (int i = 0; i < particles.size(); ++i) {
-        calcuateDensities(i);
+        calculateDensities(i);
     }
 
     // apply pressure force
