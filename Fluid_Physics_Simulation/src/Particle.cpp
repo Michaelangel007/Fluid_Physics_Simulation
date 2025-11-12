@@ -129,20 +129,25 @@ void Particle::updateCell(int idx, int prevX, int prevY) {
     cells[x][y][idx] = true;
 }
 
-std::vector<Particle> Particle::findNeighbors(int idx) {
+Neighbors Particle::findNeighbors(int idx) {
     const int   gridDim       = g_ParticleParameters.gridDim - 1;
 
     Particle& p = particles[idx];
     int cellX, cellY;
     utilPositionToGridXY( p.pos, cellX, cellY );
 
-    std::vector <Particle> neighborsOut;
+    Neighbors neighborsOut;
     for (int i = -1; i <= 1; i++) {
         if (cellX + i < 0 || cellX + i > gridDim) continue;
         for (int j = -1; j <= 1; j++) {
             if (cellY + j < 0 || cellY + j > gridDim) continue;
             for (std::pair<int, bool> neighbor : cells[cellX + i][cellY + j]) {
-                if (neighbor.first != idx && neighbor.second) neighborsOut.push_back(particles[neighbor.first]);
+                if (neighbor.first != idx && neighbor.second)
+#if USE_NEIGHBORS_INDEX
+                    neighborsOut.push_back( neighbor.first & 0xFFFF );
+#else
+                    neighborsOut.push_back(particles[neighbor.first]);
+#endif
             }
         }
     }
@@ -205,24 +210,37 @@ glm::vec3 Particle::pressure(int idx) {
     const float pressureMultiplier     = g_ParticleParameters.pressureMultiplier;
     const float nearPressureMultiplier = g_ParticleParameters.nearPressureMultiplier;
 
+    const glm::vec3 homePos    (particles[idx].pos    );
+    const float     homeDensity(particles[idx].density);
+
     glm::vec3 force = glm::vec3(0.0f);
-    std::vector <Particle> neighbors = findNeighbors(idx);
+    Neighbors neighbors = findNeighbors(idx);
 
-    for (int i = 0; i < neighbors.size(); ++i) {
-        // TODO: each thread processes 64 neighbors
+    for (int iNeighbor = 0; iNeighbor < neighbors.size(); ++iNeighbor) {
+        // TODO: Since we only have max 64 neighbors we should probably multi-thread the particles not the neighbors
+#if USE_NEIGHBORS_INDEX
+        const int jNeighbor = neighbors[iNeighbor];
+        const Particle neighbor = particles[jNeighbor];
+#else
+        const Particle neighbor = neighbors[iNeighbor];
+#endif
+        const glm::vec3 neighborPos         = neighbor.pos;
+        const float     neighborDensity     = neighbor.density;
+        const float     neighborNearDensity = neighbor.nearDensity;
+        const glm::vec3 delta(neighborPos - homePos);
 
-        float dst = glm::length(neighbors[i].pos - particles[idx].pos);
+        float dst = glm::length(delta);
         if (dst < 1e-6f) continue;
-        glm::vec3 dir = (neighbors[i].pos - particles[idx].pos) / dst;
-        float dens = std::max(neighbors[i].density, 1e-4f);
+        glm::vec3 dir = delta / dst;
+        float dens = std::max(neighborDensity, 1e-4f);
 
         float influence = pressureKernel(dst);
         float nearInfluence = nearPressureKernel(dst);
 
-        float pressureA = (neighbors[i].density - targetDensity) * pressureMultiplier;
-        float pressureB = (particles[idx].density - targetDensity) * pressureMultiplier;
+        float pressureA = (neighborDensity - targetDensity) * pressureMultiplier;
+        float pressureB = (homeDensity     - targetDensity) * pressureMultiplier;
 
-        float nearPressure = neighbors[i].nearDensity * nearPressureMultiplier;
+        float nearPressure = neighborNearDensity * nearPressureMultiplier;
 
         float sharedPressure = influence * (pressureA + pressureB) / (2.0f * dens);
         sharedPressure += nearInfluence * nearPressure;
@@ -233,13 +251,24 @@ glm::vec3 Particle::pressure(int idx) {
 }
 
 void Particle::calculateDensities(int idx) {
+    const glm::vec3 homePredictedPos = particles[idx].predictedPos;
+
     float density = 0.0f;
     float nearDensity = 0.0f;
     Particle& p = particles[idx];
-    std::vector <Particle> neighbors = findNeighbors(idx);
-    for (int i = 0; i < neighbors.size(); i++) {
-        if (i == idx) continue;
-        float dst = glm::length(neighbors[i].predictedPos - particles[idx].predictedPos);
+    Neighbors neighbors = findNeighbors(idx);
+    for (int iNeighbor = 0; iNeighbor < neighbors.size(); iNeighbor++) {
+        if (iNeighbor == idx) continue;
+
+#if USE_NEIGHBORS_INDEX
+        const int jNeighbor = neighbors[iNeighbor];
+        const Particle neighbor = particles[jNeighbor];
+#else
+        const Particle neighbor = neighbors[iNeighbor];
+#endif
+        const glm::vec3 neighborPredictedPos = neighbor.predictedPos;
+
+        float dst = glm::length(neighborPredictedPos - homePredictedPos);
         density += densityKernel(dst);
         nearDensity += nearDensityKernel(dst);
     }
@@ -247,16 +276,27 @@ void Particle::calculateDensities(int idx) {
     p.nearDensity = nearDensity;
 }
 
-glm::vec3 Particle::viscosity(int idx, std::vector<Particle> neighbors) {
+glm::vec3 Particle::viscosity(int idx, Neighbors neighbors) {
     const float viscosityMultiplier = g_ParticleParameters.viscosityMultiplier;
+    const glm::vec3 homeVel = particles[idx].velocity;
 
     glm::vec3 force = glm::vec3(0.0f);
-    for (int i = 0; i < neighbors.size(); ++i) {
-        float dst = glm::length(neighbors[i].pos - particles[idx].pos);
+    for (int iNeighbor = 0; iNeighbor < neighbors.size(); ++iNeighbor) {
+#if USE_NEIGHBORS_INDEX
+        const int jNeighbor = neighbors[iNeighbor];
+        const Particle neighbor = particles[jNeighbor];
+#else
+        const Particle neighbor = neighbors[iNeighbor];
+#endif
+        const glm::vec3 neighborPos = neighbor.pos;
+        const glm::vec3 neighborVel = neighbor.velocity;
+
+        const glm::vec3 delta(neighborPos - particles[idx].pos);
+        float dst = glm::length(delta);
         if (dst < 1e-6f) continue;
-        glm::vec3 dir = (neighbors[i].pos - particles[idx].pos) / dst;
+        glm::vec3 dir = delta / dst;
         float influence = viscosityKernel(dst);
-        force += (neighbors[i].velocity - particles[idx].velocity) * influence;
+        force += (neighborVel - homeVel) * influence;
     }
     return force * viscosityMultiplier * particles[idx].density;
 }
