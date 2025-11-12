@@ -1,5 +1,5 @@
-#define _CRT_SECURE_NO_WARNINGS
-#include"../HeaderFiles/Shaders.h"
+#include "../HeaderFiles/Common.h"
+#include "../HeaderFiles/Shaders.h"
 
 struct shaderProgramSource
 {
@@ -91,7 +91,7 @@ struct shaderProgramSource
         sprintf( ERROR, "ERROR: Failed to compile %s shader.\n", shaderType );
 #if USE_CPP_IOSTREAM
         std::cout
-            << ERROR;
+            << ERROR
             << message << std::endl;
 #else
         printf(" %s%s\n", ERROR, message );

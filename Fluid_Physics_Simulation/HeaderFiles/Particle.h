@@ -1,14 +1,12 @@
 #pragma once
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include<GLM/glm.hpp>
+#include "../HeaderFiles/Common.h"
+
+#include <GLM/glm.hpp>
 #include <GLM/gtc/matrix_transform.hpp>
 #include <GLM/gtc/type_ptr.hpp>
 #include <glm/gtc/random.hpp>
-#include<stdint.h>
-#include<vector>
-#include<unordered_map>
-#include<iostream>
+#include <stdint.h>
+#include <unordered_map>
 #include "../HeaderFiles/Window.h"
 
 class Particle

@@ -1,10 +1,9 @@
 #pragma once
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include "../HeaderFiles/Common.h"
+
 #include <fstream>
 #include <string>
 #include <sstream>
-#include<iostream>
 
 class Shader {
 public:

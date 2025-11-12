@@ -160,6 +160,7 @@
     <None Include="res\shaders\Basic.shader" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="HeaderFiles\Common.h" />
     <ClInclude Include="HeaderFiles\Particle.h" />
     <ClInclude Include="HeaderFiles\Shaders.h" />
     <ClInclude Include="HeaderFiles\Window.h" />
