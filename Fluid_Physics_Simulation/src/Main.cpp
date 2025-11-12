@@ -223,11 +223,14 @@ int main(int numArgs, const char *aArgs[])
     glUseProgram(shader);
 
     // Uniforms Declaration
-    int color_Location = glGetUniformLocation(shader, "u_Color");
+    GLint color_Location = glGetUniformLocation(shader, "u_Color");
     glUniform3f(color_Location, 0.2f, 0.3f, 0.8f);
 
-    int object_Location = glGetUniformLocation(shader, "u_pos");
+    GLint object_Location = glGetUniformLocation(shader, "u_pos");
     glUniform4f(object_Location, 0.0f, 0.0f, 0.0f, 0.0f);
+
+    assert( color_location != -1 );
+    assert( object_Location != -1 );
 
     /* Loop until the user closes the window */
 
@@ -235,17 +238,27 @@ int main(int numArgs, const char *aArgs[])
     static double elapsed               = 0.0;
     static int    numFrame              = 0;
 
+    char sFirstFrame[16] = "n/a";
+    if (numFirstRenderFrame != INT_MAX)
+        sprintf( sFirstFrame, "%d", numFirstRenderFrame );
+    const size_t numParticles = Particle::particles.size();
+    const size_t numCenters   = Particle::centers.size();
+
 #if USE_CPP_IOSTREAM
     std::cout.precision(6);
     std::cout
         << "Configuration: (C++ iostream)" << std::endl
         << std::fixed
-        << "    First Render Frame: # " <<                                         numFirstRenderFrame   << std::endl
+        << "    First Render Frame: # " <<                                         sFirstFrame           << std::endl
         << "    Last Physics Seconds: " << std::setw(7) << std::setprecision(3) << numLastPhysicsSeconds << std::endl;
 #else
     printf( "Configuration: (C printf)\n" );
-    printf( "    First Render Frame: # %d\n", numFirstRenderFrame );
+    printf( "    First Render Frame: # %s\n", sFirstFrame );
     printf( "    Last Physics Seconds: %7.3f\n", numLastPhysicsSeconds );
+    printf( "    Total particles: %llu\n", numParticles );
+    printf( "    Centers size: %llu\n", numCenters );
+    printf( "    Grid: %d x %d\n", width, height );
+    printf( "    Grid Cells: %d\n", width * height );
 #endif
 
     while (!glfwWindowShouldClose(window.win))
@@ -301,6 +314,11 @@ int main(int numArgs, const char *aArgs[])
         << std::endl;
 #else
     printf( "Total Frames: %d / Total Elapsed: %7.3f s = Avg FPS: %7.3f, Avg Frametime: %7.3f ms \n", numFrame, elapsed , avgFPS, avgFTms );
+
+    #if PROFILE_NEIGHBORS
+        printf( "Max neighbors: %d\n", g_nMaxNeighbors );
+    #endif
+
 #endif
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
