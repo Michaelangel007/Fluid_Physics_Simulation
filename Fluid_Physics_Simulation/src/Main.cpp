@@ -335,24 +335,3 @@ int main(int numArgs, const char *aArgs[])
     glfwTerminate();
     return 0;
 }
-
-
-
-
-/*  TODO:
-    1.Particle and Bounding box interactions
-        --a) Create a bounding box--
-        --b) Make visible boundries--
-        c) Test using different and multiple particle positions and speeds
-
-    2.Particle - Particle interactions
-    3.Fluid mechanics:
-        Density
-        Viscosity
-        Make use of SPH model
-    4.Testing fluid behaviour to different objects and containers
-    5.Fluid interactions with user inputs
-    6.Add color gradients to make fluid presentable
-    7.Final touches and bug testing and fixing
-    8.Upload to github and plan for future developments...
-*/
