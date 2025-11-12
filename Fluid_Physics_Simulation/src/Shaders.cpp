@@ -1,4 +1,5 @@
-#include"../HeaderFiles/Shaders.h"
+#include "../HeaderFiles/Common.h"
+#include "../HeaderFiles/Shaders.h"
 
 struct shaderProgramSource
 {
@@ -8,14 +9,49 @@ struct shaderProgramSource
 
     Shader::shaderProgramSource Shader::parse(const std::string filePath) {
     std::ifstream stream(filePath);
-
-    enum class shaderType
+    if (stream.fail())
     {
-        NONE = -1, VERTEX = 0, FRAGMENT = 1
+#if USE_CPP_IOSTREAM
+        std::cout
+            << "ERROR: Failed to open shader: " << filePath.c_str() << std::endl
+            << "WARN: Falling back to default shader."              << std::endl;
+#else
+        printf( "ERROR: Failed to open shader: %s\n", filePath.c_str() );
+        printf( "WARN: Falling back to default shader.\n" );
+#endif
+        std::string fragmentText(
+"#version 330 core\n"
+"layout (location = 0) out vec4 color;\n"
+"uniform vec3 u_Color;\n"
+"void main ()\n"
+"{\n"
+"    color = vec4(u_Color, 1.0f);\n"
+"};"
+        );
+        std::string vertexText(
+"#version 330 core\n"
+"layout (location = 0) in vec4 position;\n"
+"uniform vec4 u_pos;\n"
+"void main ()\n"
+"{\n"
+"    vec4 pos = position;\n"
+"    pos += u_pos;\n"
+"    gl_Position = pos;\n"
+"};"
+        );
+        return { vertexText, fragmentText };
+    }
+
+    enum shaderType
+    {
+        NONE = -1,
+        VERTEX = 0,
+        FRAGMENT = 1,
+        NUM_SHADER_TYPES
     };
 
     std::string line;
-    std::stringstream ss[2];
+    std::stringstream ss[shaderType::NUM_SHADER_TYPES];
     shaderType type = shaderType::NONE;
 
     while (getline(stream, line)) {
@@ -30,7 +66,7 @@ struct shaderProgramSource
         }
     }
 
-    return { ss[0].str(), ss[1].str() };
+    return { ss[shaderType::VERTEX].str(), ss[shaderType::FRAGMENT].str()};
 }
 
     unsigned int Shader::compile(unsigned int type, const std::string& source) {
@@ -43,14 +79,27 @@ struct shaderProgramSource
     glGetShaderiv(id, GL_COMPILE_STATUS, &result);
     if (result == GL_FALSE) {
         int length;
+        int size;
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-        char* message = (char*)malloc(length * sizeof(char));
+        size = length + 1;
+        char* message = (char*)malloc(size * sizeof(char));
         glGetShaderInfoLog(id, length, &length, message);
-        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!" << std::endl;
-        std::cout << message << std::endl;
+        message[size] = '\0';
+
+        const char *shaderType = (type == GL_VERTEX_SHADER ? "vertex" : "fragment");
+        char ERROR[256];
+        sprintf( ERROR, "ERROR: Failed to compile %s shader.\n", shaderType );
+#if USE_CPP_IOSTREAM
+        std::cout
+            << ERROR
+            << message << std::endl;
+#else
+        printf(" %s%s\n", ERROR, message );
+#endif
+
+        free( message );
         glDeleteShader(id);
         return 0;
-
     }
 
     return id;

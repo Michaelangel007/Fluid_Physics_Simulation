@@ -1,8 +1,7 @@
 #pragma once
-#include <GL/glew.h>
-#include<GLFW/glfw3.h>
-#include<iostream>
-#include<vector>
+#include "../HeaderFiles/Common.h"
+
+extern const char  *APP_NAME;
 
 class Window {
 public:
@@ -13,6 +12,6 @@ public:
 	static unsigned int vbo;
 	static unsigned int vao;
 	static std::vector<float> recData;
-	Window(int w, int h);
+	Window(int w, int h, bool waitVSnyc = true);
 	static void drawBoundary(int object_Location, int color_Location);
 };
