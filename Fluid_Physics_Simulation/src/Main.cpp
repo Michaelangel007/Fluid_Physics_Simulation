@@ -280,7 +280,7 @@ int main(int numArgs, const char *aArgs[])
         numFrame++;
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastTime;
-               elapsed += deltaTime; // POHO
+               elapsed += deltaTime;
         lastTime = currentTime;
 
         if (verbose) {
