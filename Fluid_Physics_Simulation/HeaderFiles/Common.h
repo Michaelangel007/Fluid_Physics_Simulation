@@ -11,7 +11,7 @@
 #define USE_CPP_IOSTREAM 1
 #define _CRT_SECURE_NO_WARNINGS
 
-// Already setin Preprocessor
+// Already set in Solution properties > Configuration Properties > C/C++ > Preprocessor
 // #define GLEW_STATIC
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
