@@ -243,6 +243,7 @@ int main(int numArgs, const char *aArgs[])
         sprintf( sFirstFrame, "%d", numFirstRenderFrame );
     const size_t numParticles = Particle::particles.size();
     const size_t numCenters   = Particle::centers.size();
+    const int    gridDim      = g_ParticleParameters.gridDim;
 
 #if USE_CPP_IOSTREAM
     std::cout.precision(6);
@@ -250,15 +251,19 @@ int main(int numArgs, const char *aArgs[])
         << "Configuration: (C++ iostream)" << std::endl
         << std::fixed
         << "    First Render Frame: # " <<                                         sFirstFrame           << std::endl
-        << "    Last Physics Seconds: " << std::setw(7) << std::setprecision(3) << numLastPhysicsSeconds << std::endl;
+        << "    Last Physics Seconds: " << std::setw(7) << std::setprecision(3) << numLastPhysicsSeconds << std::endl
+        << "    Particles: "            <<                                         width << " x " << height << std::endl
+        << "    Total particles: "      <<                                         numParticles          << std::endl
+        << "    Centers: "              <<                                         numCenters            << std::endl
+        << "    Grid dimensions: "      <<                                         gridDim               << std::endl;
 #else
     printf( "Configuration: (C printf)\n" );
     printf( "    First Render Frame: # %s\n", sFirstFrame );
     printf( "    Last Physics Seconds: %7.3f\n", numLastPhysicsSeconds );
+    printf( "    Particles: %d x %d\n", width, height );
     printf( "    Total particles: %llu\n", numParticles );
-    printf( "    Centers size: %llu\n", numCenters );
-    printf( "    Grid: %d x %d\n", width, height );
-    printf( "    Grid Cells: %d\n", width * height );
+    printf( "    Centers: %llu\n", numCenters );
+    printf( "    Grid dimensions: %d\n", gridDim );
 #endif
 
     while (!glfwWindowShouldClose(window.win))
