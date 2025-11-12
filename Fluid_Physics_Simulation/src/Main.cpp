@@ -229,7 +229,7 @@ int main(int numArgs, const char *aArgs[])
     GLint object_Location = glGetUniformLocation(shader, "u_pos");
     glUniform4f(object_Location, 0.0f, 0.0f, 0.0f, 0.0f);
 
-    assert( color_location != -1 );
+    assert( color_Location != -1 );
     assert( object_Location != -1 );
 
     /* Loop until the user closes the window */
