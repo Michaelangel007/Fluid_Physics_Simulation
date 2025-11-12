@@ -100,7 +100,6 @@ void Particle::generateParticle(float aspectRatio) {
 }
 
 void Particle::populate(float aspectRatio) {
-    const float ooGridRadius = g_ParticleParameters.ooGridRadius;
     const int gridDim = g_ParticleParameters.gridDim;
 
     std::vector <GridCol> grid(gridDim, GridCol(gridDim)); // cells[x][y][idx]
@@ -117,8 +116,6 @@ void Particle::populate(float aspectRatio) {
         particles.push_back(p);
 
         // populating cells
-//        int x = (p.pos.x + 1.0f) * ooGridRadius;
-//        int y = (p.pos.y + 1.0f) * ooGridRadius;
         int cellX, cellY;
         utilPositionToGridXY( p.pos, cellX, cellY );
         cells[cellX][cellY][i/2] = true;
@@ -126,23 +123,16 @@ void Particle::populate(float aspectRatio) {
 }
 
 void Particle::updateCell(int idx, int prevX, int prevY) {
-    const float ooGridRadius = g_ParticleParameters.ooGridRadius;
-
     cells[prevX][prevY][idx] = false;
-    //int x = (particles[idx].pos.x + 1.0f) * ooGridRadius;
-    //int y = (particles[idx].pos.y + 1.0f) * ooGridRadius;
     int x, y;
     utilPositionToGridXY( particles[idx].pos, x, y );
     cells[x][y][idx] = true;
 }
 
 std::vector<Particle> Particle::findNeighbors(int idx) {
-    const float oneOverRadius = g_ParticleParameters.ooGridRadius;
     const int   gridDim       = g_ParticleParameters.gridDim - 1;
 
     Particle& p = particles[idx];
-    //int cellX = (p.pos.x + 1.0f) * oneOverRadius;
-    //int cellY = (p.pos.y + 1.0f) * oneOverRadius;
     int cellX, cellY;
     utilPositionToGridXY( p.pos, cellX, cellY );
 
@@ -313,15 +303,12 @@ void Particle::drawElements(int object_Location, int color_Location, bool bDraw,
 
 void Particle::updateElements(int object_Location, int color_Location) {
     const float stepSize     = g_ParticleParameters.stepSize;
-    const float ooGridRadius = g_ParticleParameters.ooGridRadius;
     const float gravity      = g_ParticleParameters.GRAVITY_MAGNITUDE;
     const float maxSpeed     = g_ParticleParameters.MAX_SPEED;
 
     // change position and cell
     for (int i = 0; i < particles.size(); ++i) {
         Particle& p = particles[i];
-//        int x = (p.pos.x + 1.0f) * ooGridRadius;
-//        int y = (p.pos.y + 1.0f) * ooGridRadius;
         int cellX, cellY;
         utilPositionToGridXY( p.pos, cellX, cellY );
         p.pos += stepSize * p.velocity;
