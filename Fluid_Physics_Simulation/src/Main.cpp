@@ -24,6 +24,9 @@ static double numLastPhysicsSeconds = 0.0;
 static int    width = 25;
 static int    height = 20;
 
+static double g_nElapsed            = 0.0;
+
+
 enum SimulationState
 {
      STATE_INIT
@@ -317,7 +320,8 @@ static void callbackInput(GLFWwindow* pWindow, int key, int scancode, int action
     }
 }
 
-void displayStats(const int numFrame, double elapsed) {
+void displayStats(const int numFrame) {
+    double elapsed = g_nElapsed;
     if (elapsed < 1e-6)
         elapsed = 1e-6; // Alt.: std::numeric_limits<float>::infinity();
 
@@ -491,7 +495,6 @@ int main(int numArgs, const char *aArgs[])
     /* Loop until the user closes the window */
 
     static double lastTime              = 0.0f;
-    static double elapsed               = 0.0;
     static int    numFrame              = 0;
 
     char sFirstFrame[16] = "n/a";
@@ -550,7 +553,7 @@ int main(int numArgs, const char *aArgs[])
         if (bRunning) {
             numFrame++;
             double deltaTime = currentTime - lastTime;
-                   elapsed += deltaTime;
+                   g_nElapsed += deltaTime;
 
             if (verbose) {
     #if USE_CPP_IOSTREAM
@@ -558,10 +561,10 @@ int main(int numArgs, const char *aArgs[])
                     << "FPS: "          << std::setw(7) << std::setprecision(3) << (1.f / deltaTime)
                     << " / Frametime: " << std::setw(7) << std::setprecision(3) << deltaTime * 1000.f << "ms"
                     << "  Frame #: "    << std::setw(7)                         << numFrame
-                    << "  Elapsed: "    << std::setw(7) << std::setprecision(3) << elapsed << " s"
+                    << "  Elapsed: "    << std::setw(7) << std::setprecision(3) << g_nElapsed << " s"
                     << std::endl;
     #else
-                printf( "FPS: %7.3f / Frametime: %7.3f ms  Frame #: %7d  Elapsed: %7.3f s\n", (1.f / deltaTime), deltaTime * 1000.f, numFrame, elapsed );
+                printf( "FPS: %7.3f / Frametime: %7.3f ms  Frame #: %7d  Elapsed: %7.3f s\n", (1.f / deltaTime), deltaTime * 1000.f, numFrame, g_nElapsed );
     #endif
             }
         }
@@ -572,10 +575,10 @@ int main(int numArgs, const char *aArgs[])
 
         /* Poll for and process events */
         glfwPollEvents();
-        if (numLastPhysicsSeconds > 0.0 && (elapsed >= numLastPhysicsSeconds)) {
+        if (numLastPhysicsSeconds > 0.0 && (g_nElapsed >= numLastPhysicsSeconds)) {
             switch (g_eSimulationState) {
                 case STATE_RUNNING:
-                    displayStats(numFrame, elapsed);
+                    displayStats(numFrame);
 
                     if (pauseAtEnd) {
                         g_eSimulationState = STATE_WAITING_TO_END;
