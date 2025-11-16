@@ -4,7 +4,7 @@
 #if USE_NEIGHBORS_INDEX
 	// 3.844 ms -> 1.329 ms
 	// If USE_NEIGHBORS_INDEX is enabled we can further use a static array instead of a dynamic vector
-	#define USE_FIXED_NEIGHBORS_SIZE 64
+	#define USE_FIXED_NEIGHBORS_SIZE 76
 #endif
 
 //#define SHOW_MAX_OCCUPANCY_ONLY 1

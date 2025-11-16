@@ -11,6 +11,7 @@ static const char  *APP_VERSION  = "Version 1.2";
 
 // Configuration
 static bool   benchmark             = false;
+static bool   createGridCenters     = true;
 static bool   pauseAtStart          = false;
 static bool   pauseAtEnd            = false;
 static bool   showGrid              = false;
@@ -38,6 +39,8 @@ void usage()
 "--help          Alias for -?.\n"
 "-benchmark      Run simulation for 3 minutes (~10,800 frames @ 60fps), render first frame at frame number 7,200.\n"
 "-benchfast      Run simulation for 10 seconds (~600 frames @ 60fps), render first frame at frame number 300.\n"
+"-createcenter   Generate particles in grid centers.\n"
+"-createrandom   Generate particles in random positions.\n"
 "-h              Specifiy grid height (rows).\n"
 "-height         Alias for -h.\n"
 "-pausestart     Pause at start of simulation waiting for ENTER/RETURN key.\n"
@@ -98,6 +101,14 @@ void parseCommandLine(int nArgs, const char* aArgs[])
                 numFirstRenderFrame   = 5 * 60; // 5 s * 60 frames/s = 300 frames
                 numLastPhysicsSeconds = 10.0; // 10 s
                 benchmark = true;
+            }
+            else
+            if (strcmp(pArg, "-createcenter"     ) == 0) {
+                createGridCenters = true;
+            }
+            else
+            if (strcmp(pArg, "-createrandom"     ) == 0) {
+                createGridCenters = false;
             }
             else
             if ((strcmp(pArg, "-h"     ) == 0)
@@ -373,7 +384,10 @@ int main(int numArgs, const char *aArgs[])
     glGenBuffers(1, &Particle::vbo);
     glGenBuffers(1, &Particle::ibo);
 
-    Particle::generateGridCenters(height, width);
+    if( createGridCenters )
+        Particle::generateGridCenters(height, width);
+    else
+        Particle::generateRandomCenters();
     Particle::populate(window.aspectRatio); // create particles using center positions
 
     // TODO: Create render grid
