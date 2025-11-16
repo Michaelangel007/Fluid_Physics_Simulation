@@ -7,9 +7,11 @@
 	#define USE_FIXED_NEIGHBORS_SIZE 64
 #endif
 
-//#define PROFILE_NEIGHBORS 1
-#define USE_CPP_IOSTREAM 1
-#define _CRT_SECURE_NO_WARNINGS
+//#define SHOW_MAX_OCCUPANCY_ONLY 1
+//#define PROFILE_OCCUPANCY       1
+//#define PROFILE_NEIGHBORS       1
+#define USE_CPP_IOSTREAM        1
+#define _CRT_SECURE_NO_WARNINGS 1
 
 // Already set in Solution properties > Configuration Properties > C/C++ > Preprocessor
 // #define GLEW_STATIC
