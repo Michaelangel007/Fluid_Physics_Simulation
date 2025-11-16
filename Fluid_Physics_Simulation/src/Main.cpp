@@ -12,6 +12,7 @@ static const char  *APP_VERSION  = "Version 1.1";
 // Configuration
 static bool   benchmark             = false;
 static bool   pauseAtEnd            = false;
+static bool   showGrid              = false;
 static bool   verbose               = false;
 static bool   vsync                 = true;
 static int    numFirstRenderFrame   = 0;
@@ -40,6 +41,7 @@ void usage()
 "-height         Alias for -h.\n"
 "-pause          Pause at end of simulation waiting for RETURN.\n"
 "-render #       Don't render until specified frame number. -1 is never render. (Default 0).\n"
+"-showgrid       Show neighbor grid.\n"
 "-time   #.##    Run simulation for specified seconds.\n"
 "-v              Verbose mode off (default).\n"
 "+v              Verbose mode on.\n"
@@ -154,6 +156,10 @@ void parseCommandLine(int nArgs, const char* aArgs[])
                     numFirstRenderFrame = INT_MAX;
             }
             else
+            if (strcmp(pArg, "-showgrid") == 0) {
+                showGrid = false;
+            }
+            else
             if (strcmp(pArg, "-time") == 0) {
                 iArg++;
                 if (iArg >= nArgs) {
@@ -203,12 +209,146 @@ void parseCommandLine(int nArgs, const char* aArgs[])
                 verbose = true;
             }
             else
+            if (strcmp(pArg, "+showgrid") == 0) {
+                showGrid = true;
+            }
+            else
             if (strcmp(pArg, "+vsync") == 0) {
                 vsync = true;
             }
         }
 
         iArg++;
+    }
+}
+
+bool bHaveEnter = false;
+static void callbackInput(GLFWwindow* pWindow, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_ENTER)
+        bHaveEnter = true;
+    else
+    if (key == 'R') {
+        // TODO: printf( "Resetting...\n" );
+    }
+    else
+    if (key == ' ') {
+        // TODO: simulationPaused = !simulationPaused;
+    }
+}
+
+void waitForEnter(GLFWwindow* pWindow) {
+    bHaveEnter = false;
+    glfwSetKeyCallback( pWindow, callbackInput );
+
+    while( !bHaveEnter && !glfwWindowShouldClose(pWindow) )
+        glfwPollEvents();
+}
+
+void drawGrid(GLint object_Location, GLint color_Location) {
+    static std::vector<float> gridCells =
+    {
+        -1.0f,  1.0f, // Top Left
+         1.0f,  1.0f, // Top Right
+         1.0f, -1.0f, // Bot Right
+        -1.0f, -1.0f  // Bot Left
+    };
+
+    const int       nGridCell   = g_ParticleParameters.gridDim;
+    const float     nGridRadius = g_ParticleParameters.gridRadius;
+    const glm::vec3 vGridColor( 0.2f, 0.2f, 0.2f );
+          glm::vec3 vGridColorOccupancy;
+
+    for (int iGridCellY = 0; iGridCellY < nGridCell; iGridCellY++) {
+        for (int iGridCellX = 0; iGridCellX < nGridCell; iGridCellX++) {
+            float x = -1.0f + ((float)(iGridCellX) * nGridRadius);
+            float y = -1.0f + ((float)(iGridCellY) * nGridRadius);
+            const float x0 = x;
+            const float x1 = x + nGridRadius;
+            const float y0 = y;
+            const float y1 = y + nGridRadius;
+
+            gridCells[0] = x0; gridCells[1] = y1;
+            gridCells[2] = x1; gridCells[3] = y1;
+            gridCells[4] = x1; gridCells[5] = y0;
+            gridCells[6] = x0; gridCells[7] = y0;
+            Window::drawRectangle(object_Location, color_Location, &gridCells, &vGridColor );
+        }
+    }
+
+#if PROFILE_OCCUPANCY
+    static int nMaxOccupancy = 0;
+           int nMaxOccupancyThisFrame = 0;
+#endif
+
+    const int nParticles = g_ParticleParameters.numOfParticles;// Alt. (int) Particle::particles.size();
+    const int nGridCells = nGridCell * nGridCell;
+    static std::vector<int> vGridOccupancy;
+
+    if (vGridOccupancy.size() != nGridCells) {
+        vGridOccupancy.clear();
+        vGridOccupancy.reserve( nGridCells );
+        std::fill_n( std::back_inserter( vGridOccupancy), nGridCells, 0 );
+    }
+
+    for( int iGridCell = 0; iGridCell < nGridCells; iGridCell++ ) {
+        vGridOccupancy[ iGridCell ] = 0;
+    }
+
+    for (int iParticle = 0; iParticle < nParticles; iParticle++) {
+        const Particle* pParticle = &Particle::particles[iParticle];
+        int iGridCellX, iGridCellY;
+        utilPositionToGridXY( pParticle->pos, iGridCellX, iGridCellY );
+        int iGridCell = (iGridCellY* nGridCell) + iGridCellX;
+        vGridOccupancy[ iGridCell ]++;
+
+#if PROFILE_OCCUPANCY
+        const int nGridOccupancy = vGridOccupancy[iGridCell];
+
+        if( nMaxOccupancyThisFrame < nGridOccupancy)
+            nMaxOccupancyThisFrame = nGridOccupancy;
+
+        if (nMaxOccupancy < nGridOccupancy) {
+            nMaxOccupancy = nGridOccupancy;
+#if USE_CPP_IOSTREAM
+        std::cout
+            << "Frame #" << numFrame << ": "
+            << "Cell" << iGridCellX << "," << iGridCellY << " = "
+            << nMaxOccupancyThisFrame << "/"
+            << nGridOccupancy << " particles" << std::endl;
+#else
+        printf( "Frame #%d: Cell[%d,%d] = %d/%d particles\n", numFrame, iGridCellX, iGridCellY, nMaxOccupancyThisFrame, nGridOccupancy );
+#endif
+        }
+#endif
+    }
+
+    for( int iGridCell = 0; iGridCell < nGridCells; iGridCell++ ) {
+        int nCells = vGridOccupancy[ iGridCell ];
+        int iGridCellX = iGridCell % nGridCell;
+        int iGridCellY = iGridCell / nGridCell;
+
+        float x = -1.0f + ((float)(iGridCellX) * nGridRadius);
+        float y = -1.0f + ((float)(iGridCellY) * nGridRadius);
+        const float x0 = x;
+        const float x1 = x + nGridRadius;
+        const float y0 = y;
+        const float y1 = y + nGridRadius;
+
+        gridCells[0] = x0; gridCells[1] = y1;
+        gridCells[2] = x1; gridCells[3] = y1;
+        gridCells[4] = x1; gridCells[5] = y0;
+        gridCells[6] = x0; gridCells[7] = y0;
+
+#if SHOW_MAX_OCCUPANCY_ONLY
+        if (nCells >= nMaxOccupancyThisFrame) {
+#else
+        if (nCells) {
+#endif
+            const float nMaxOccupancy = (float) 6;
+            const float t = std::min( (float)nCells / nMaxOccupancy, 1.0f );
+            utilColorMappingHotToCold( t, vGridColorOccupancy );
+            Window::drawRectangle(object_Location, color_Location, &gridCells, &vGridColorOccupancy );
+        }
     }
 }
 
@@ -287,6 +427,8 @@ int main(int numArgs, const char *aArgs[])
         bool bDraw = (numFrame >= numFirstRenderFrame);
         Particle::updateElements(object_Location, color_Location);
         Particle::drawElements(object_Location, color_Location, bDraw, numFrame);
+        if (showGrid)
+            drawGrid(object_Location, color_Location);
         Window::drawRectangle(object_Location, color_Location, &g_WorldBoundary);
 
         //calculate fps
