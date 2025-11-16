@@ -1,6 +1,10 @@
 # Fluid_Physics_Simulation
 
-YouTube link for a demonstration video: [https://www.youtube.com/watch?v=iZVx1ZC-qsQ](https://www.youtube.com/watch?v=iZVx1ZC-qsQ)
+![pic](pics/preview.png)
+
+[Demo](https://youtu.be/dvEPeeAJQFo) showing reset and neighbor grid display.
+
+Original code by Spleen0291. Optimized, QoL and cleanup by me.
 
 # Optimizations
 
