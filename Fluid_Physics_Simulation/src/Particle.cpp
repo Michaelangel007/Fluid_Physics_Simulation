@@ -22,18 +22,6 @@ unsigned int Particle::vao = 0;
 unsigned int Particle::vbo = 0;
 unsigned int Particle::ibo = 0;
 
-inline void utilPositionToGridXY(const glm::vec3 pos, int& x, int& y)
-{
-    const glm::vec3 translate(1.0f, 1.0f, 0.0f);
-    const float ooGridRadius = g_ParticleParameters.ooGridRadius;
-
-    glm::vec3 cellPos = pos;
-    cellPos += translate;
-    cellPos *= ooGridRadius;
-    x = (int)cellPos.x;
-    y = (int)cellPos.y;
-}
-
 void checkBoundary(Particle& p) {
     const float r = g_ParticleParameters.radius;
 

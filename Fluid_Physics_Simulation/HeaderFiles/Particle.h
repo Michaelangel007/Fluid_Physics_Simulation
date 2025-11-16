@@ -55,6 +55,18 @@ struct ParticleParameters
 };
 extern ParticleParameters g_ParticleParameters;
 
+inline void utilPositionToGridXY(const glm::vec3 pos, int& x, int& y)
+{
+    const glm::vec3 translate(1.0f, 1.0f, 0.0f);
+    const float ooGridRadius = g_ParticleParameters.ooGridRadius;
+
+    glm::vec3 cellPos = pos;
+    cellPos += translate;
+    cellPos *= ooGridRadius;
+    x = (int)cellPos.x;
+    y = (int)cellPos.y;
+}
+
 typedef std::unordered_map<int, bool> GridOccupancy;
 typedef std::vector <GridOccupancy>   GridCol;
 
