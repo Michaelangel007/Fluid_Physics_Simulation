@@ -66,6 +66,7 @@ void Particle::generateGridCenters(int gridRows, int gridCols) {
         }
         top -= space2;
     }
+    g_ParticleParameters.numOfParticles = (int)Particle::centers.size() / 2;
 }
 
 void Particle::generateParticle(float aspectRatio) {
