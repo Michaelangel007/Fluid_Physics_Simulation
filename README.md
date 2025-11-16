@@ -30,7 +30,7 @@ The command line options can be displayed with `-?` or `--help`:
 -render #       Don't render until specified frame number. -1 is never render. (Default 0).
 -showgrid       Hide neighbor grid. (Press G to toggle displaying the grid.)
 +showgrid       Show neighbor grid.
--time   #.##    Run simulation for specified seconds.
+-time #.##      Run simulation for specified seconds.
 -v              Verbose mode off (default).
 +v              Verbose mode on.
 -V              Display version and quit.
@@ -40,6 +40,17 @@ The command line options can be displayed with `-?` or `--help`:
 -w              Specify grid width (columns).
 -width          Alias for -w.
 ```
+
+# Hotkeys
+
+* `SPACE` to toggle pause/running.
+* `ENTER` to start the simulation if paused on start. The title bar will show the status.
+* `R` to reset the simulation.
+* `G` to toggle display of the (neighbor spatial) grid.
+
+# Example Command-Line
+
+`run -time 10 -pause`
 
 # Benchmarking
 

@@ -7,7 +7,7 @@
 #include <limits> // MAX_INT
 
        const char  *APP_NAME     = "Fluid Physics Simulation";
-static const char  *APP_VERSION  = "Version 1.3";
+static const char  *APP_VERSION  = "Version 1.4";
 
 // Configuration
 static float  g_nAspectRatio        = 1.0f;
