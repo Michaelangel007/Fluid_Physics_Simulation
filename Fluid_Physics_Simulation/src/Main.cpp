@@ -308,7 +308,14 @@ static void callbackInput(GLFWwindow* pWindow, int key, int scancode, int action
             showGrid = !showGrid;
         else
         if (key == 'R') {
-            // TODO: printf( "Resetting...\n" );
+            Particle::reset(g_nAspectRatio);
+            g_nElapsed = 0.0;
+
+            if(simulationPaused)
+                g_eSimulationState = STATE_WAITING_TO_RUN;
+            else
+                g_eSimulationState = STATE_RUNNING;
+
         }
         else
         if (key == ' ') { // Can only toggle pause if the simulation is running, not waiting
