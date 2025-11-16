@@ -115,6 +115,7 @@ public:
 	static unsigned int vbo;
 	static unsigned int ibo;
 
+	static void reset(float aspectRatio);
 	static void generateRandomCenters();
 	static void generateGridCenters(int rows, int cols);
 	static void populate(float aspectRatio);

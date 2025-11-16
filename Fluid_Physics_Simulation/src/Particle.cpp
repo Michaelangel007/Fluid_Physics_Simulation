@@ -72,6 +72,11 @@ void Particle::generateGridCenters(int gridRows, int gridCols) {
     g_ParticleParameters.numOfParticles = (int)Particle::centersX.size();
 }
 
+void Particle::reset(float aspectRatio) {
+    Particle::particles.clear();
+    populate(aspectRatio);
+}
+
 void Particle::generateParticle(float aspectRatio) {
     const float partRadius = g_ParticleParameters.radius;
     const int   numSegment = g_ParticleParameters.numSegments;
