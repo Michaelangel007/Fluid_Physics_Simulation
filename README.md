@@ -69,3 +69,36 @@ There are two benchmark modes:
 | `-benchmark` | 7,200 |  3 minutes |
 
 I used `-render -1 -time 180 -vsync` for benchmarking without rendering.
+
+# Cleanup and Optimization History
+
+Someone asked for help on reddit why their fluid sim was slow. I decided to take a look since the codebase was relatively small.
+
+* First, I needed a way to run the benchmark for a fixed amount of time.
+  * Added command-line option: `-time #.#`.
+* Next, I needed a way to skip rendering for the first N frames.
+  * Added command-line option: `-render #`.
+* I added a summary of Total frames, Total elapsed, Average FPS, and Average frametime.
+* I needed a way to turn off VSync so we can run "flat-out" and not worry about rendering time.
+  * Added command-line option: `-vsync`.
+* Added a way to turn on VSync for completeness.
+  * Added command-line option: `+vsync`.
+* Added `-render -1` to keep rendering permanently disabled.
+* Split up rendering and updating into `drawElements()` and `updateElements()` respectively.
+* `Particle` is a "fat" class that does three things:
+  * Particle data,
+  * Simulation Properties,
+  * Rendering data.
+* I moved most of the simulation properties to `ParticleParameters`. No change in performance as expected.
+* Looking at `findNeighbors `I then looked at the maximum number of neighbors returned via `PROFILE_NEIGHBORS`. This was 64 which means a LOT of temporry copies of Particles are being returned!
+* Replaced the `std::vector<particle>` with a typedef for `Neighbor` and fixed up the `findNeighbors()` and `viscosity()` API.  This allows us to re-factor the underlying implementation for Neighbor without breaking too much code.
+* Added a define `USE_NEIGHBORS_INDEX` to replace Neighbors with `typedef std::vector<int16_t> Neighbors;` With some minor cleanup `const Particle neighbor = particles[neighbors[iNeighbor]]` that brought the average frame time down to 3.8 ms. Not much but it was a start.
+* Seeing a LOT of tempory copies I switched from a dynamic vector to a static array for neighbors.
+* Added a define `USE_FIXED_NEIGHBORS_SIZE` and added a `std::vector` replacement I called `Neighbors` that has `size()` and `push_back()` functions along with `[]` array overloading so it is API compatible with std::vector. This brought the average frame time down to 1.3 ms
+* Continued cleanup by splitting `centers` vector into `centersX` and `centersY`. This lets us get rid of a few `centers.size() / 2` shenanigans.
+* Some QoL were long overdue.
+  * Added ability to display the spatial neighbor grid cells.
+  * Added command-line option: `+showgrid` and `-showgrid`
+  * Added `G` key to toggle this at run-time.
+  * Added ability to pause/unpause the simulation.
+  * Added ability to reset the simulation via `R`.
