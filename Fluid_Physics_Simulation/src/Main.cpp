@@ -7,10 +7,11 @@
 #include <limits> // MAX_INT
 
        const char  *APP_NAME     = "Fluid Physics Simulation";
-static const char  *APP_VERSION  = "Version 1.1";
+static const char  *APP_VERSION  = "Version 1.2";
 
 // Configuration
 static bool   benchmark             = false;
+static bool   pauseAtStart          = false;
 static bool   pauseAtEnd            = false;
 static bool   showGrid              = false;
 static bool   verbose               = false;
@@ -39,7 +40,8 @@ void usage()
 "-benchfast      Run simulation for 10 seconds (~600 frames @ 60fps), render first frame at frame number 300.\n"
 "-h              Specifiy grid height (rows).\n"
 "-height         Alias for -h.\n"
-"-pause          Pause at end of simulation waiting for RETURN.\n"
+"-pausestart     Pause at start of simulation waiting for ENTER/RETURN key.\n"
+"-pause          Pause at end of simulation waiting for ENTER/RETURN.\n"
 "-render #       Don't render until specified frame number. -1 is never render. (Default 0).\n"
 "-showgrid       Show neighbor grid.\n"
 "-time   #.##    Run simulation for specified seconds.\n"
@@ -118,6 +120,10 @@ void parseCommandLine(int nArgs, const char* aArgs[])
             else
             if (strcmp(pArg, "-pause") == 0) {
                 pauseAtEnd = true;
+            }
+            else
+            if (strcmp(pArg, "-pausestart") == 0) {
+                pauseAtStart = true;
             }
             else
             if ((strcmp(pArg, "-w"    ) == 0)
@@ -367,8 +373,10 @@ int main(int numArgs, const char *aArgs[])
     glGenBuffers(1, &Particle::vbo);
     glGenBuffers(1, &Particle::ibo);
 
-    Particle::generateGridCenters(height, width); // generate grid / random particles
+    Particle::generateGridCenters(height, width);
     Particle::populate(window.aspectRatio); // create particles using center positions
+
+    // TODO: Create render grid
 
     // creating and compiling shaders
     Shader::shaderProgramSource source = Shader::parse("res/shaders/Basic.shader");
@@ -419,13 +427,25 @@ int main(int numArgs, const char *aArgs[])
     printf( "    Grid dimensions: %d\n", gridDim );
 #endif
 
+    if (pauseAtStart) {
+        glClear(GL_COLOR_BUFFER_BIT);
+        Particle::drawElements(object_Location, color_Location, true, 0);
+        if (showGrid) {
+            drawGrid(object_Location, color_Location);
+        }
+        Window::drawRectangle(object_Location, color_Location, &g_WorldBoundary);
+        glfwSwapBuffers(window.win);
+        waitForEnter( window.win );
+    }
+
     while (!glfwWindowShouldClose(window.win))
     {
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
         bool bDraw = (numFrame >= numFirstRenderFrame);
-        Particle::updateElements(object_Location, color_Location);
+//        if (!bPaused)
+            Particle::updateElements(object_Location, color_Location);
         Particle::drawElements(object_Location, color_Location, bDraw, numFrame);
         if (showGrid)
             drawGrid(object_Location, color_Location);
@@ -487,7 +507,7 @@ int main(int numArgs, const char *aArgs[])
 #else
         printf( "Done.\n" );
 #endif
-        getchar();
+        waitForEnter( window.win );
     }
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
