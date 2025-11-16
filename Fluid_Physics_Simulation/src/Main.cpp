@@ -30,8 +30,6 @@ std::vector <float> g_WorldBoundary = {
     -0.9f, -0.9f  // Bot Left
 };
 
-std::vector <float> Particle::centers = {};
-
 void usage()
 {
     const char *HELP =

@@ -9,9 +9,10 @@
 ParticleParameters g_ParticleParameters;
 
 //Defining static members
-std::vector <float> Particle::positions;
+std::vector <float>        Particle::centers;
+std::vector <float>        Particle::positions;
 std::vector <unsigned int> Particle::indices;
-std::vector <Particle> Particle::particles;
+std::vector <Particle>     Particle::particles;
 
 // Can't use ctor cells(size, GridCol(size)) since particle radius is no longer a static.
 //int size = 2.0f / Particle::s_Radius;

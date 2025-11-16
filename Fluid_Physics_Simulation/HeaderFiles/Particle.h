@@ -96,11 +96,11 @@ typedef std::vector <GridOccupancy>   GridCol;
 class Particle
 {
 public:
-	static std::vector <float> positions;
+	static std::vector <float>        positions;
 	static std::vector <unsigned int> indices;
-	static std::vector <float> centers;
-	static std::vector <Particle> particles;
-	static std::vector <GridCol> cells;
+	static std::vector <float>        centers;
+	static std::vector <Particle>     particles;
+	static std::vector <GridCol>      cells;
 
 	glm::vec3 pos;
 	glm::vec3 predictedPos;
