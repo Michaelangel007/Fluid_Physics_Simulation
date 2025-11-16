@@ -14,7 +14,7 @@
 
 struct ParticleParameters
 {
-	int   numOfParticles;
+	int   numOfParticles; // ONLY if generating particles with random centers
 	int   numSegments;
 
 	int   gridDim;

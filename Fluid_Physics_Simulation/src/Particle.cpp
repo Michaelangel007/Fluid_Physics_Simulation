@@ -38,6 +38,9 @@ void checkBoundary(Particle& p) {
     if (p.pos.y < -0.9f + r) p.pos.y = -0.9f + r, p.velocity.y = -p.velocity.y * 0.5f;
 }
 
+// See:
+// * generateRandomCenters()
+// * generateGridCenters()
 void Particle::generateRandomCenters() {
     const float r = g_ParticleParameters.radius;
 
@@ -47,16 +50,18 @@ void Particle::generateRandomCenters() {
     }
 }
 
-void Particle::generateGridCenters(int rows, int cols) {
+// See:
+// * generateRandomCenters()
+// * generateGridCenters()
+void Particle::generateGridCenters(int gridRows, int gridCols) {
     const float space1 =     g_ParticleParameters.radius + g_ParticleParameters.spacing;
     const float space2 = 2 * g_ParticleParameters.radius + g_ParticleParameters.spacing;
 
-    float left = 0.0f - space2 * cols / 2.0f;
-    float top = 0.9f - space1;
-    for (int i = 0; i < rows; i++) {
-        
-        for (int j = 0; j < cols; j++) {
-            Particle::centers.push_back(left + j * space2);
+    float left = 0.0f - space2 * gridCols / 2.0f;
+    float top  = 0.9f - space1;
+    for (int y = 0; y < gridRows; y++) {
+        for (int x = 0; x < gridCols; x++) {
+            Particle::centers.push_back(left + x*space2);
             Particle::centers.push_back(top);
         }
         top -= space2;
