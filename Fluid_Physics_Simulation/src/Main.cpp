@@ -53,8 +53,9 @@ void usage()
 "-createrandom   Generate particles in random positions.\n"
 "-h              Specifiy grid height (rows).\n"
 "-height         Alias for -h.\n"
-"-pause          Pause at end of simulation waiting for ENTER/RETURN.\n"
-"-pausestart     Pause at start of simulation waiting for ENTER/RETURN key.\n"
+"-pause          Pause at both stand and end of simulation waiting for ENTER to be pressed.\n"
+"-pausestart     Pause at start of simulation waiting for ENTER to be pressed.\n"
+"-pauseend       Pause at end of simulation waiting for ENTER to be pressed.\n"
 "-render #       Don't render until specified frame number. -1 is never render. (Default 0).\n"
 "-showgrid       Hide neighbor grid. (Press G to toggle displaying the grid.)\n"
 "+showgrid       Show neighbor grid.\n"
@@ -141,11 +142,16 @@ void parseCommandLine(int nArgs, const char* aArgs[])
             }
             else
             if (strcmp(pArg, "-pause") == 0) {
+                pauseAtStart = true;
                 pauseAtEnd = true;
             }
             else
             if (strcmp(pArg, "-pausestart") == 0) {
                 pauseAtStart = true;
+            }
+            else
+            if (strcmp(pArg, "-pauseend") == 0) {
+                pauseAtEnd = true;
             }
             else
             if ((strcmp(pArg, "-w"    ) == 0)
