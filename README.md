@@ -20,10 +20,16 @@ The command line options can be displayed with `-?` or `--help`:
 --help          Alias for -?.
 -benchmark      Run simulation for 3 minutes (~10,800 frames @ 60fps), render first frame at frame number 7,200.
 -benchfast      Run simulation for 10 seconds (~600 frames @ 60fps), render first frame at frame number 300.
+-createcenter   Generate particles in grid centers.
+-createrandom   Generate particles in random positions.
 -h              Specifiy grid height (rows).
 -height         Alias for -h.
--pause          Pause at end of simulation waiting for RETURN.
+-pause          Pause at both stand and end of simulation waiting for ENTER to be pressed.
+-pausestart     Pause at start of simulation waiting for ENTER to be pressed.
+-pauseend       Pause at end of simulation waiting for ENTER to be pressed.
 -render #       Don't render until specified frame number. -1 is never render. (Default 0).
+-showgrid       Hide neighbor grid. (Press G to toggle displaying the grid.)
++showgrid       Show neighbor grid.
 -time   #.##    Run simulation for specified seconds.
 -v              Verbose mode off (default).
 +v              Verbose mode on.
