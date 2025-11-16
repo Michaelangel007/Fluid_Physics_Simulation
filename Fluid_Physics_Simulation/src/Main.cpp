@@ -208,7 +208,8 @@ void parseCommandLine(int nArgs, const char* aArgs[])
             }
             else
             if (strcmp(pArg, "--version") == 0) {
-                verbose = false;
+                version();
+                exit(0);
             }
             else {
 #if USE_CPP_IOSTREAM
