@@ -15,6 +15,8 @@
 // #define GLEW_STATIC
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <GLM/glm.hpp>
+
 #include <vector>
 
 #if USE_CPP_IOSTREAM
