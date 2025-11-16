@@ -535,7 +535,8 @@ int main(int numArgs, const char *aArgs[])
         glClear(GL_COLOR_BUFFER_BIT);
 
         bool bDraw = (numFrame >= numFirstRenderFrame);
-        if (!simulationPaused)
+        bool bRunning = (g_eSimulationState == STATE_RUNNING) && !simulationPaused;
+        if (bRunning)
             Particle::updateElements(object_Location, color_Location);
         Particle::drawElements(object_Location, color_Location, bDraw, numFrame);
         if (showGrid)
@@ -543,12 +544,11 @@ int main(int numArgs, const char *aArgs[])
         Window::drawRectangle(object_Location, color_Location, &g_WorldBoundary);
 
         //calculate FPS
-        if (!simulationPaused) {
+        double currentTime = glfwGetTime();
+        if (bRunning) {
             numFrame++;
-            double currentTime = glfwGetTime();
             double deltaTime = currentTime - lastTime;
                    elapsed += deltaTime;
-            lastTime = currentTime;
 
             if (verbose) {
     #if USE_CPP_IOSTREAM
@@ -563,6 +563,7 @@ int main(int numArgs, const char *aArgs[])
     #endif
             }
         }
+        lastTime = currentTime;
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window.win);
