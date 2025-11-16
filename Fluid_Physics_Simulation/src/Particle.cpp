@@ -146,9 +146,10 @@ Neighbors Particle::findNeighbors(int idx) {
         }
     }
 #if PROFILE_NEIGHBORS
-    int numNeighbors = neighborsOut.size();
-    if (g_nMaxNeighbors < numNeighbors)
+    int numNeighbors = (int) neighborsOut.size();
+    if (g_nMaxNeighbors < numNeighbors) {
         g_nMaxNeighbors = numNeighbors;
+    }
 #endif
     return neighborsOut;
 }
@@ -307,7 +308,7 @@ void Particle::drawElements(int object_Location, int color_Location, bool bDraw,
     if (bDraw)
     {
         const int numSegments = g_ParticleParameters.numSegments;
-        const int offset = centers.size() / 2 * (numSegments + 2);
+        const int offset = (int)centers.size() / 2 * (numSegments + 2);
 
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
