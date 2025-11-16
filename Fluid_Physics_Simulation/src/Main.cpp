@@ -416,7 +416,7 @@ int main(int numArgs, const char *aArgs[])
     if (numFirstRenderFrame != INT_MAX)
         sprintf( sFirstFrame, "%d", numFirstRenderFrame );
     const size_t numParticles = Particle::particles.size();
-    const size_t numCenters   = Particle::centers.size();
+    const size_t numCenters   = Particle::centersX.size();
     const int    gridDim      = g_ParticleParameters.gridDim;
 
 #if USE_CPP_IOSTREAM

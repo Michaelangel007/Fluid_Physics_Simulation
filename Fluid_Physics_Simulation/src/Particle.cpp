@@ -9,7 +9,8 @@
 ParticleParameters g_ParticleParameters;
 
 //Defining static members
-std::vector <float>        Particle::centers;
+std::vector <float>        Particle::centersX;
+std::vector <float>        Particle::centersY;
 std::vector <float>        Particle::positions;
 std::vector <unsigned int> Particle::indices;
 std::vector <Particle>     Particle::particles;
@@ -43,11 +44,12 @@ void checkBoundary(Particle& p) {
 // * generateRandomCenters()
 // * generateGridCenters()
 void Particle::generateRandomCenters() {
-    const float r = g_ParticleParameters.radius;
+    const float r            = g_ParticleParameters.radius;
+    const int   numParticles = g_ParticleParameters.numOfParticles;
 
-    for (int i = 0; i < g_ParticleParameters.numOfParticles; i++) {
-        Particle::centers.push_back(glm::linearRand(-0.9f + r, 0.9f - r));
-        Particle::centers.push_back(glm::linearRand(-0.9f + r, 0.9f - r));
+    for (int iParticle = 0; iParticle < numParticles; iParticle++) {
+        Particle::centersX.push_back(glm::linearRand(-0.9f + r, 0.9f - r));
+        Particle::centersY.push_back(glm::linearRand(-0.9f + r, 0.9f - r));
     }
 }
 
@@ -62,12 +64,12 @@ void Particle::generateGridCenters(int gridRows, int gridCols) {
     float top  = 0.9f - space1;
     for (int y = 0; y < gridRows; y++) {
         for (int x = 0; x < gridCols; x++) {
-            Particle::centers.push_back(left + x*space2);
-            Particle::centers.push_back(top);
+            Particle::centersX.push_back(left + x*space2);
+            Particle::centersY.push_back(top);
         }
         top -= space2;
     }
-    g_ParticleParameters.numOfParticles = (int)Particle::centers.size() / 2;
+    g_ParticleParameters.numOfParticles = (int)Particle::centersX.size();
 }
 
 void Particle::generateParticle(float aspectRatio) {
@@ -94,18 +96,20 @@ void Particle::generateParticle(float aspectRatio) {
     }
 }
 
+// Read vector centers create particles
 void Particle::populate(float aspectRatio) {
-    const int gridDim = g_ParticleParameters.gridDim;
+    const int gridDim    = g_ParticleParameters.gridDim;
+    const int numCenters = g_ParticleParameters.numOfParticles;
 
     std::vector <GridCol> grid(gridDim, GridCol(gridDim)); // cells[x][y][idx]
     Particle::cells = grid;
 
     // generating Centers
-    for (int i = 0; i < centers.size(); i += 2) {
+    for (int iCenter = 0; iCenter < numCenters; iCenter++) {
         Particle p;
         p.velocity = glm::vec3(0.0f);
         p.acceleration = glm::vec3(0.0f);
-        p.pos = glm::vec3(centers[i], centers[i + 1], 0.0f);
+        p.pos = glm::vec3(centersX[iCenter], centersY[iCenter], 0.0f);
         p.density = 0.0f;
         p.generateParticle(aspectRatio);
         particles.push_back(p);
@@ -113,7 +117,7 @@ void Particle::populate(float aspectRatio) {
         // populating cells
         int cellX, cellY;
         utilPositionToGridXY( p.pos, cellX, cellY );
-        cells[cellX][cellY][i/2] = true;
+        cells[cellX][cellY][iCenter] = true;
     }
 }
 
@@ -308,8 +312,9 @@ glm::vec3 velToColor(Particle p) {
 void Particle::drawElements(int object_Location, int color_Location, bool bDraw,int frame) {
     if (bDraw)
     {
-        const int numSegments = g_ParticleParameters.numSegments;
-        const int offset = (int)centers.size() / 2 * (numSegments + 2);
+        const int numSegments  = g_ParticleParameters.numSegments;
+        const int numParticles = (int)particles.size();
+        const int offset       = numParticles * (numSegments + 2);
 
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -322,7 +327,7 @@ void Particle::drawElements(int object_Location, int color_Location, bool bDraw,
         glEnableVertexAttribArray(0);
 
         // Draw Loop
-        for (int i = 0; i < particles.size(); ++i) {
+        for (int i = 0; i < numParticles; ++i) {
             Particle& p = particles[i];
             glm::vec3 color = velToColor(p);
 
