@@ -90,10 +90,10 @@ Someone asked for help on reddit why their fluid sim was slow. I decided to take
   * Simulation Properties,
   * Rendering data.
 * I moved most of the simulation properties to `ParticleParameters`. No change in performance as expected.
-* Looking at `findNeighbors `I then looked at the maximum number of neighbors returned via `PROFILE_NEIGHBORS`. This was 64 which means a LOT of temporry copies of Particles are being returned!
+* Looking at `findNeighbors `I then looked at the maximum number of neighbors returned via `PROFILE_NEIGHBORS`. This was 64 which means a LOT of temporary copies of Particles are being returned!
 * Replaced the `std::vector<particle>` with a typedef for `Neighbor` and fixed up the `findNeighbors()` and `viscosity()` API.  This allows us to re-factor the underlying implementation for Neighbor without breaking too much code.
 * Added a define `USE_NEIGHBORS_INDEX` to replace Neighbors with `typedef std::vector<int16_t> Neighbors;` With some minor cleanup `const Particle neighbor = particles[neighbors[iNeighbor]]` that brought the average frame time down to 3.8 ms. Not much but it was a start.
-* Seeing a LOT of tempory copies I switched from a dynamic vector to a static array for neighbors.
+* Seeing a LOT of temporary copies I switched from a dynamic vector to a static array for neighbors.
 * Added a define `USE_FIXED_NEIGHBORS_SIZE` and added a `std::vector` replacement I called `Neighbors` that has `size()` and `push_back()` functions along with `[]` array overloading so it is API compatible with std::vector. This brought the average frame time down to 1.3 ms
 * Continued cleanup by splitting `centers` vector into `centersX` and `centersY`. This lets us get rid of a few `centers.size() / 2` shenanigans.
 * Some QoL were long overdue.
