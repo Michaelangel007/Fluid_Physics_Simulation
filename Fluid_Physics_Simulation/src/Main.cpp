@@ -19,12 +19,12 @@ static double numLastPhysicsSeconds = 0.0;
 static int    width = 25;
 static int    height = 20;
 
-// Defining static variables 
-std::vector <float> Window::recData = {
-    -0.9f,  0.9f,
-     0.9f,  0.9f,
-     0.9f, -0.9f,
-    -0.9f, -0.9f
+// Defining static variables
+std::vector <float> g_WorldBoundary = {
+    -0.9f,  0.9f, // Top Left
+     0.9f,  0.9f, // Top Right
+     0.9f, -0.9f, // Bot Right
+    -0.9f, -0.9f  // Bot Left
 };
 
 std::vector <float> Particle::centers = {};
@@ -284,10 +284,10 @@ int main(int numArgs, const char *aArgs[])
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
-        Window::drawBoundary(object_Location, color_Location);
         bool bDraw = (numFrame >= numFirstRenderFrame);
         Particle::updateElements(object_Location, color_Location);
         Particle::drawElements(object_Location, color_Location, bDraw, numFrame);
+        Window::drawRectangle(object_Location, color_Location, &g_WorldBoundary);
 
         //calculate fps
         numFrame++;

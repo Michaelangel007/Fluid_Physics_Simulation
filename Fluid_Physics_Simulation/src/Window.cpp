@@ -50,19 +50,27 @@ Window :: Window(int w, int h, bool waitVSync) {
 
 }
 
-void Window::drawBoundary(int object_Location, int color_Location) {
+void Window::drawRectangle(int object_Location, int color_Location, const std::vector<float> *p_rectangleVertices, const glm::vec3 *p_color ) {
+    if( !p_rectangleVertices )
+        return;
+
+    static glm::vec3 s_color( 1.0f, 1.0f, 1.0f );
+
+    if (!p_color)
+        p_color = &s_color;
+
     const int VERTICES = 4;
     const int COMPONENTS = 2; // x, y
 
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, VERTICES * COMPONENTS * sizeof(float), recData.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, VERTICES * COMPONENTS * sizeof(float), p_rectangleVertices->data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, COMPONENTS, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     glUniform4f(object_Location, 0.0f, 0.0f, 0.0f, 0.0f);
-    glUniform3f(color_Location, 1.0f, 1.0f, 1.0f);
+    glUniform3f(color_Location, p_color->r, p_color->g, p_color->b);
 
     glDrawArrays(GL_LINE_LOOP, 0, VERTICES);
 }

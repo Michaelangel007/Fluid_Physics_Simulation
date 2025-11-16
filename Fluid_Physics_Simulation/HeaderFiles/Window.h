@@ -41,7 +41,6 @@ public:
 	float aspectRatio = 1.0f; 
 	static unsigned int vbo;
 	static unsigned int vao;
-	static std::vector<float> recData;
 	Window(int w, int h, bool waitVSnyc = true);
-	static void drawBoundary(int object_Location, int color_Location);
+	static void drawRectangle(int object_Location, int color_Location, const std::vector<float> *p_rectangleVertices = nullptr, const glm::vec3* pColor = nullptr);
 };
