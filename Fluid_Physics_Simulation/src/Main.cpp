@@ -14,6 +14,7 @@ static bool   benchmark             = false;
 static bool   createGridCenters     = true;
 static bool   pauseAtStart          = false;
 static bool   pauseAtEnd            = false;
+static bool   simulationPaused      = false;
 static bool   showGrid              = false;
 static bool   verbose               = false;
 static bool   vsync                 = true;
@@ -21,6 +22,17 @@ static int    numFirstRenderFrame   = 0;
 static double numLastPhysicsSeconds = 0.0;
 static int    width = 25;
 static int    height = 20;
+
+enum SimulationState
+{
+     STATE_INIT
+    ,STATE_WAITING_TO_RUN
+    ,STATE_RUNNING
+    ,STATE_END_STATS
+    ,STATE_WAITING_TO_END
+    ,STATE_DONE
+};
+SimulationState g_eSimulationState = STATE_INIT;
 
 // Defining static variables
 std::vector <float> g_WorldBoundary = {
@@ -41,10 +53,10 @@ void usage()
 "-createrandom   Generate particles in random positions.\n"
 "-h              Specifiy grid height (rows).\n"
 "-height         Alias for -h.\n"
-"-pausestart     Pause at start of simulation waiting for ENTER/RETURN key.\n"
 "-pause          Pause at end of simulation waiting for ENTER/RETURN.\n"
+"-pausestart     Pause at start of simulation waiting for ENTER/RETURN key.\n"
 "-render #       Don't render until specified frame number. -1 is never render. (Default 0).\n"
-"-showgrid       Hide neighbor grid.\n"
+"-showgrid       Hide neighbor grid. (Press G to toggle displaying the grid.)\n"
 "+showgrid       Show neighbor grid.\n"
 "-time   #.##    Run simulation for specified seconds.\n"
 "-v              Verbose mode off (default).\n"
@@ -239,26 +251,86 @@ void parseCommandLine(int nArgs, const char* aArgs[])
     }
 }
 
-bool bHaveEnter = false;
+void updateTitleBarState(GLFWwindow* pWindow) {
+    const SimulationState state = g_eSimulationState;
+    const char *aPaused[2] =
+    {
+        "",
+        " (PAUSED)"
+    };
+    char sTitle[128];
+
+    if (state == STATE_WAITING_TO_RUN)
+        sprintf( sTitle, "%s (PAUSED - Press ENTER to start)", APP_NAME);
+    else
+    if (state == STATE_WAITING_TO_END)
+        sprintf( sTitle, "%s (PAUSED - Press ENTER to end)", APP_NAME);
+    else
+        sprintf( sTitle, "%s%s", APP_NAME, aPaused[simulationPaused]);
+    glfwSetWindowTitle(pWindow, sTitle);
+}
+
 static void callbackInput(GLFWwindow* pWindow, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ENTER)
-        bHaveEnter = true;
-    else
-    if (key == 'R') {
-        // TODO: printf( "Resetting...\n" );
-    }
-    else
-    if (key == ' ') {
-        // TODO: simulationPaused = !simulationPaused;
+    if (action == GLFW_PRESS) {
+        if (key == GLFW_KEY_ENTER) {
+            switch (g_eSimulationState) {
+                case STATE_WAITING_TO_RUN:
+                    g_eSimulationState = STATE_RUNNING;
+                    simulationPaused = false;
+                    updateTitleBarState(pWindow);
+                    break;
+                case STATE_WAITING_TO_END:
+                    if( pauseAtEnd ) {
+#if USE_CPP_IOSTREAM
+                        std::cout << "Done.\n";
+#else
+                        printf( "Done.\n" );
+#endif
+                    }
+                    g_eSimulationState = STATE_DONE;
+                    break;
+                default:
+                    break;
+            }
+        }
+        else
+        if (key == 'G')
+            showGrid = !showGrid;
+        else
+        if (key == 'R') {
+            // TODO: printf( "Resetting...\n" );
+        }
+        else
+        if (key == ' ') { // Can only toggle pause if the simulation is running, not waiting
+            if (g_eSimulationState == STATE_RUNNING) {
+                simulationPaused = !simulationPaused;
+                updateTitleBarState(pWindow);
+            }
+        }
     }
 }
 
-void waitForEnter(GLFWwindow* pWindow) {
-    bHaveEnter = false;
-    glfwSetKeyCallback( pWindow, callbackInput );
+void displayStats(const int numFrame, double elapsed) {
+    if (elapsed < 1e-6)
+        elapsed = 1e-6; // Alt.: std::numeric_limits<float>::infinity();
 
-    while( !bHaveEnter && !glfwWindowShouldClose(pWindow) )
-        glfwPollEvents();
+    double frames  = (double)numFrame; // frames
+    double avgFPS  = frames / elapsed; // frames/second
+    double avgFTms = (1.0 / avgFPS) * 1000.0; // ms
+#if USE_CPP_IOSTREAM
+    std::cout
+        <<   "Total Frames: "  <<                                         numFrame << " "
+        << "/ Total Elapsed: " << std::setw(7) << std::setprecision(3) << elapsed << " s "
+        << "= Avg FPS: "       << std::setw(7) << std::setprecision(3) << avgFPS
+        << ", Avg Frametime: " << std::setw(7) << std::setprecision(3) << avgFTms << " ms"
+        << std::endl;
+#else
+    printf( "Total Frames: %d / Total Elapsed: %7.3f s = Avg FPS: %7.3f, Avg Frametime: %7.3f ms \n", numFrame, elapsed , avgFPS, avgFTms );
+
+    #if PROFILE_NEIGHBORS
+        printf( "Max neighbors: %d\n", g_nMaxNeighbors );
+    #endif
+#endif
 }
 
 void drawGrid(GLint object_Location, GLint color_Location) {
@@ -375,7 +447,8 @@ int main(int numArgs, const char *aArgs[])
     parseCommandLine( numArgs, aArgs );
 
     Window window(1600, 1000, vsync);
-    
+    GLFWwindow *pWindow = window.win;
+
     // Generating Buffers
     glGenVertexArrays(1, &Window::vao);
     glGenBuffers(1, &Window::vbo);
@@ -441,48 +514,48 @@ int main(int numArgs, const char *aArgs[])
     printf( "    Grid dimensions: %d\n", gridDim );
 #endif
 
+    simulationPaused = pauseAtStart;
     if (pauseAtStart) {
-        glClear(GL_COLOR_BUFFER_BIT);
-        Particle::drawElements(object_Location, color_Location, true, 0);
-        if (showGrid) {
-            drawGrid(object_Location, color_Location);
-        }
-        Window::drawRectangle(object_Location, color_Location, &g_WorldBoundary);
-        glfwSwapBuffers(window.win);
-        waitForEnter( window.win );
+        g_eSimulationState = STATE_WAITING_TO_RUN;
+        updateTitleBarState(pWindow);
     }
+    else
+        g_eSimulationState = STATE_RUNNING;
+    glfwSetKeyCallback(pWindow, callbackInput);
 
-    while (!glfwWindowShouldClose(window.win))
+    while (!glfwWindowShouldClose(pWindow))
     {
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
         bool bDraw = (numFrame >= numFirstRenderFrame);
-//        if (!bPaused)
+        if (!simulationPaused)
             Particle::updateElements(object_Location, color_Location);
         Particle::drawElements(object_Location, color_Location, bDraw, numFrame);
         if (showGrid)
             drawGrid(object_Location, color_Location);
         Window::drawRectangle(object_Location, color_Location, &g_WorldBoundary);
 
-        //calculate fps
-        numFrame++;
-        double currentTime = glfwGetTime();
-        double deltaTime = currentTime - lastTime;
-               elapsed += deltaTime;
-        lastTime = currentTime;
+        //calculate FPS
+        if (!simulationPaused) {
+            numFrame++;
+            double currentTime = glfwGetTime();
+            double deltaTime = currentTime - lastTime;
+                   elapsed += deltaTime;
+            lastTime = currentTime;
 
-        if (verbose) {
-#if USE_CPP_IOSTREAM
-            std::cout
-                << "FPS: "          << std::setw(7) << std::setprecision(3) << (1.f / deltaTime)
-                << " / Frametime: " << std::setw(7) << std::setprecision(3) << deltaTime * 1000.f << "ms"
-                << "  Frame #: "    << std::setw(7)                         << numFrame
-                << "  Elapsed: "    << std::setw(7) << std::setprecision(3) << elapsed << " s"
-                << std::endl;
-#else
-            printf( "FPS: %7.3f / Frametime: %7.3f ms  Frame #: %7d  Elapsed: %7.3f s\n", (1.f / deltaTime), deltaTime * 1000.f, numFrame, elapsed );
-#endif
+            if (verbose) {
+    #if USE_CPP_IOSTREAM
+                std::cout
+                    << "FPS: "          << std::setw(7) << std::setprecision(3) << (1.f / deltaTime)
+                    << " / Frametime: " << std::setw(7) << std::setprecision(3) << deltaTime * 1000.f << "ms"
+                    << "  Frame #: "    << std::setw(7)                         << numFrame
+                    << "  Elapsed: "    << std::setw(7) << std::setprecision(3) << elapsed << " s"
+                    << std::endl;
+    #else
+                printf( "FPS: %7.3f / Frametime: %7.3f ms  Frame #: %7d  Elapsed: %7.3f s\n", (1.f / deltaTime), deltaTime * 1000.f, numFrame, elapsed );
+    #endif
+            }
         }
 
         /* Swap front and back buffers */
@@ -490,38 +563,28 @@ int main(int numArgs, const char *aArgs[])
 
         /* Poll for and process events */
         glfwPollEvents();
-        if (numLastPhysicsSeconds > 0.0 && (elapsed >= numLastPhysicsSeconds)) break;
-    }
+        if (numLastPhysicsSeconds > 0.0 && (elapsed >= numLastPhysicsSeconds)) {
+            switch (g_eSimulationState) {
+                case STATE_RUNNING:
+                    displayStats(numFrame, elapsed);
 
-    if (elapsed < 1e-6)
-        elapsed = 1e-6; // Alt.: std::numeric_limits<float>::infinity();
-
-    double frames  = (double)numFrame; // frames
-    double avgFPS  = frames / elapsed; // frames/second
-    double avgFTms = (1.0 / avgFPS) * 1000.0; // ms
-#if USE_CPP_IOSTREAM
-    std::cout
-        <<   "Total Frames: "  <<                                         numFrame << " "
-        << "/ Total Elapsed: " << std::setw(7) << std::setprecision(3) << elapsed << " s "
-        << "= Avg FPS: "       << std::setw(7) << std::setprecision(3) << avgFPS
-        << ", Avg Frametime: " << std::setw(7) << std::setprecision(3) << avgFTms << " ms"
-        << std::endl;
-#else
-    printf( "Total Frames: %d / Total Elapsed: %7.3f s = Avg FPS: %7.3f, Avg Frametime: %7.3f ms \n", numFrame, elapsed , avgFPS, avgFTms );
-
-    #if PROFILE_NEIGHBORS
-        printf( "Max neighbors: %d\n", g_nMaxNeighbors );
-    #endif
-
-#endif
-
-    if( pauseAtEnd ) {
-#if USE_CPP_IOSTREAM
-        std::cout << "Done.\n";
-#else
-        printf( "Done.\n" );
-#endif
-        waitForEnter( window.win );
+                    if (pauseAtEnd) {
+                        g_eSimulationState = STATE_WAITING_TO_END;
+                        simulationPaused = true;
+                        updateTitleBarState(pWindow);
+                    }
+                    else {
+                        g_eSimulationState = STATE_DONE;
+                        glfwSetWindowShouldClose(pWindow, 1);
+                    }
+                    break;
+                case STATE_DONE:
+                    glfwSetWindowShouldClose(pWindow, 1);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
