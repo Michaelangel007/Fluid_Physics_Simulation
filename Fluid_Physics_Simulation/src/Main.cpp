@@ -10,6 +10,7 @@
 static const char  *APP_VERSION  = "Version 1.3";
 
 // Configuration
+static float  g_nAspectRatio        = 1.0f;
 static bool   benchmark             = false;
 static bool   createGridCenters     = true;
 static bool   pauseAtStart          = false;
@@ -454,6 +455,7 @@ int main(int numArgs, const char *aArgs[])
 
     Window window(1600, 1000, vsync);
     GLFWwindow *pWindow = window.win;
+    g_nAspectRatio = window.aspectRatio;
 
     // Generating Buffers
     glGenVertexArrays(1, &Window::vao);
