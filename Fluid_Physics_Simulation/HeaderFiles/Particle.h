@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include "../HeaderFiles/Window.h"
 
+#define M_PI 3.1415926535897932384626433832f
+
 #if PROFILE_NEIGHBORS
 	extern int g_nMaxNeighbors;
 #endif
