@@ -139,6 +139,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\GLEW\include;$(SolutionDir)Dependencies\GLFW\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <OpenMPSupport>true</OpenMPSupport>
+      <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
