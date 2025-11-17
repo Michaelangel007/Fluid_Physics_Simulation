@@ -23,6 +23,10 @@ struct ParticleParameters
 	float gridRadius;
 	float ooGridRadius;
 
+	float farDensityScale;  //   4.0f / (M_PI * std::powf(gridRadius, 8.0f));
+	float farPressureScale; // -30.0f / (M_PI * std::powf(gridRadius, 5.0f));
+	float viscosityScale;   //  40.0f / (M_PI * std::powf(gridRadius, 5.0f));
+
 	float nearPressureMultiplier;
 	float pressureMultiplier;
 	float radius;
@@ -53,6 +57,10 @@ struct ParticleParameters
 		gridRadius = 0.05f;
 		ooGridRadius = 1.0f / gridRadius;
 		gridDim    = (int)(2.0f / gridRadius); // (2.0f / 0.05f) -> 40
+
+		farDensityScale  =   4.0f / (M_PI * std::powf(gridRadius, 8.0f));
+		farPressureScale = -30.0f / (M_PI * std::powf(gridRadius, 5.0f));
+		viscosityScale   =  40.0f / (M_PI * std::powf(gridRadius, 5.0f));
 	}
 };
 extern ParticleParameters g_ParticleParameters;

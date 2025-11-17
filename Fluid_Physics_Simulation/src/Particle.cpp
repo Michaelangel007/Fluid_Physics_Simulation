@@ -163,11 +163,11 @@ Neighbors Particle::findNeighbors(int idx) {
 }
 
 float Particle::densityKernel(float dst) {
-    const float radius = g_ParticleParameters.gridRadius;
+    const float gridRadius = g_ParticleParameters.gridRadius;
+    const float scale      = g_ParticleParameters.farDensityScale;
 
-    if (dst >= radius) return 0;
-    float scale = 4.0f / (M_PI * std::powf(radius, 8.0f));
-    float val = radius*radius - dst*dst;
+    if (dst >= gridRadius) return 0;
+    float val = gridRadius*gridRadius - dst*dst;
     return val * val * val * scale;
 }
 
@@ -182,9 +182,9 @@ float Particle::nearDensityKernel(float dst) {
 
 float Particle::pressureKernel(float dst) {
     const float gridRadius   = g_ParticleParameters.gridRadius;
+    const float scale        = g_ParticleParameters.farPressureScale;
 
     if (dst >= gridRadius) return 0;
-    float scale = -30.0f / (M_PI * std::powf(gridRadius, 5.0f));
     float val = gridRadius - dst;
     return val * val * scale;
 }
@@ -200,10 +200,10 @@ float Particle::nearPressureKernel(float dst) {
 }
 
 float Particle::viscosityKernel(float dst) {
-    const float gridRadius   = g_ParticleParameters.gridRadius;
+    const float gridRadius  = g_ParticleParameters.gridRadius;
+    const float scale       = g_ParticleParameters.viscosityScale;
 
     if (dst >= gridRadius) return 0;
-    float scale = 40.0f / (M_PI * std::powf(gridRadius, 5.0f));
     float val = gridRadius - dst;
     return val * scale;
 }
