@@ -103,3 +103,59 @@ Someone asked for help on reddit why their fluid sim was slow. I decided to take
   * Added `G` key to toggle this at run-time.
   * Added ability to pause/unpause the simulation.
   * Added ability to reset the simulation via `R`.
+* There are a bunch of kernel functions that calculate various scale factors based on gridRadius but this is a constant even though it wasn't declared `const`!
+* In `densityKernel()` the far density scale is constantly being recalculated even though this is a constant:
+  * This gives us a 1.329 ms -> 1.287 ms speedup, another 3.2% faster.
+
+Before:
+```c++
+    float scale = 4.0f / (M_PI * std::powf(gridRadius, 8.0f));
+    :
+    return val * val * val * scale;
+```
+
+After:
+```c++
+    const float scale  = g_ParticleParameters.farDensityScale;
+    :
+    return val * val * val * scale;
+```
+
+
+* Likewise, in `pressureKernel()` the  far pressure scale is constantly being recalculated even though this is a constant:
+  * This gives us 1.287ms -> 1.264 ms speedup, another 1.8% faster.
+
+Before:
+
+```c++
+    float scale = -30.0f / (M_PI * std::powf(gridRadius, 5.0f));
+    :
+    return val * val * scale;
+```
+
+After:
+```c++
+    const float scale        = g_ParticleParameters.farPressureScale;
+    :
+    return val * val * scale;
+```
+
+
+* And again, in `viscosityKernel()` the far viscosity scale is constantly being recalculated even though this is a constant:
+  * This gives us 1.264ms -> 1.232 ms speedup, another 2.5% faster.
+
+Before:
+```c++
+    float scale = 40.0f / (M_PI * std::powf(gridRadius, 5.0f));
+    :
+    return val * scale;
+```
+
+After:
+```c++
+    const float scale  = g_ParticleParameters.viscosityScale;
+    :
+    return val * scale;
+```
+
+We are only single-threaded (!) so there is still performance on the table!
