@@ -174,7 +174,7 @@ float Particle::kernelFarDensity(float dst) {
     const float gridRadius = g_ParticleParameters.gridRadius;
     const float scale      = g_ParticleParameters.farDensityScale;
 
-    if (dst >= gridRadius) return 0;
+    if (dst >= gridRadius) return 0.f;
     float val = gridRadius*gridRadius - dst*dst;
     return val * val * val * scale;
 }
@@ -183,7 +183,7 @@ float Particle::kernelNearDensity(float dst) {
     const float gridRadius   = g_ParticleParameters.gridRadius;
     const float ooGridRadius = g_ParticleParameters.ooGridRadius;
 
-    if (dst >= gridRadius) return 0;
+    if (dst >= gridRadius) return 0.f;
     float val = 1 - dst * ooGridRadius;
     return val * val * val;
 }
@@ -192,7 +192,7 @@ float Particle::kernelFarPressure(float dst) {
     const float gridRadius   = g_ParticleParameters.gridRadius;
     const float scale        = g_ParticleParameters.farPressureScale;
 
-    if (dst >= gridRadius) return 0;
+    if (dst >= gridRadius) return 0.f;
     float val = gridRadius - dst;
     return val * val * scale;
 }
@@ -201,7 +201,7 @@ float Particle::kernelNearPressure(float dst) {
     const float gridRadius   = g_ParticleParameters.gridRadius;
     const float ooGridRadius = g_ParticleParameters.ooGridRadius;
 
-    if (dst >= gridRadius) return 0;
+    if (dst >= gridRadius) return 0.f;
     float scale = -3.0f * ooGridRadius;
     float val = 1 - dst * ooGridRadius;
     return val * val * scale;
