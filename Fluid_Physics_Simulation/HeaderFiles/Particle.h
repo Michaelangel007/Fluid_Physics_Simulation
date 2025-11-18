@@ -134,7 +134,7 @@ public:
 	void generateParticle(float aspectRatio);
 	static glm::vec3 calculatePressure(int idx);
 	static glm::vec3 calculateViscosity(int idx, Neighbors neighbors);
-	static void calculateDensities(int idx);
+	static void updateDensities(int idx);
 	static float kernelFarDensity(float dst);
 	static float kernelNearDensity(float dst);
 	static float kernelFarPressure(float dst);

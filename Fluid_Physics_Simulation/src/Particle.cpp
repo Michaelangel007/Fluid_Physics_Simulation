@@ -261,7 +261,7 @@ glm::vec3 Particle::calculatePressure(int idx) {
     return force + calculateViscosity(idx, neighbors);
 }
 
-void Particle::calculateDensities(int idx) {
+void Particle::updateDensities(int idx) {
     const glm::vec3 homePredictedPos = particles[idx].predictedPos;
 
     float density = 0.0f;
@@ -362,7 +362,7 @@ void Particle::updateParticles() {
     
     // calculate densities
     for (int i = 0; i < particles.size(); ++i) {
-        calculateDensities(i);
+        updateDensities(i);
     }
 
     // apply pressure force
