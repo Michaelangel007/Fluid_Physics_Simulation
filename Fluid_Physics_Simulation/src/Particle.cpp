@@ -30,192 +30,6 @@ glm::vec3 utilVelocityToColor(const Particle& p) {
     return color;
 }
 
-void Particle::updateBoundary() {
-    const float r = g_ParticleParameters.radius;
-
-    // check left
-    if (pos.x < -0.9f + r) pos.x = -0.9f + r, velocity.x = -velocity.x * 0.5f;
-
-    // check right
-    if (pos.x > 0.9f - r) pos.x = 0.9f  - r, velocity.x = -velocity.x * 0.5f;
-
-    // check top
-    if (pos.y > 0.9f - r) pos.y = 0.9f - r, velocity.y = -velocity.y * 0.5f;
-
-    //check bottom
-    if (pos.y < -0.9f + r) pos.y = -0.9f + r, velocity.y = -velocity.y * 0.5f;
-}
-
-// See:
-// * generateRandomCenters()
-// * generateGridCenters()
-void Particle::generateRandomCenters() {
-    const float r            = g_ParticleParameters.radius;
-    const int   numParticles = g_ParticleParameters.numOfParticles;
-
-    for (int iParticle = 0; iParticle < numParticles; iParticle++) {
-        Particle::centersX.push_back(glm::linearRand(-0.9f + r, 0.9f - r));
-        Particle::centersY.push_back(glm::linearRand(-0.9f + r, 0.9f - r));
-    }
-}
-
-// See:
-// * generateRandomCenters()
-// * generateGridCenters()
-void Particle::generateGridCenters(int gridRows, int gridCols) {
-    const float space1 =     g_ParticleParameters.radius + g_ParticleParameters.spacing;
-    const float space2 = 2 * g_ParticleParameters.radius + g_ParticleParameters.spacing;
-
-    float left = 0.0f - space2 * gridCols / 2.0f;
-    float top  = 0.9f - space1;
-    for (int y = 0; y < gridRows; y++) {
-        for (int x = 0; x < gridCols; x++) {
-            Particle::centersX.push_back(left + x*space2);
-            Particle::centersY.push_back(top);
-        }
-        top -= space2;
-    }
-    g_ParticleParameters.numOfParticles = (int)Particle::centersX.size();
-}
-
-void Particle::reset(float aspectRatio) {
-    Particle::particles.clear();
-    populate(aspectRatio);
-}
-
-void Particle::generateParticle(float aspectRatio) {
-    const float partRadius = g_ParticleParameters.radius;
-    const int   numSegment = g_ParticleParameters.numSegments;
-
-    positions.push_back(0.0f);
-    positions.push_back(0.0f);
-
-    int startingIndex = (int)positions.size() / 2;
-
-    for (int idxSegment = 0; idxSegment <= numSegment; idxSegment++) {
-        float theta = 2.0f * M_PI * (float)idxSegment / (float)numSegment;
-        float x = partRadius * cosf(theta);
-        float y = partRadius * sinf(theta);
-        positions.push_back((x) / aspectRatio);
-        positions.push_back(y);
-
-        if (idxSegment == 0) continue;
-
-        indices.push_back(startingIndex                 );
-        indices.push_back(startingIndex + idxSegment + 0);
-        indices.push_back(startingIndex + idxSegment + 1);
-    }
-}
-
-// Read vector centers create particles
-void Particle::populate(float aspectRatio) {
-    const int gridDim    = g_ParticleParameters.gridDim;
-    const int numCenters = g_ParticleParameters.numOfParticles;
-
-    std::vector <GridCol> grid(gridDim, GridCol(gridDim)); // cells[x][y][idx]
-    Particle::cells = grid;
-
-    // generating Centers
-    for (int iCenter = 0; iCenter < numCenters; iCenter++) {
-        Particle p;
-        p.velocity = glm::vec3(0.0f);
-        p.acceleration = glm::vec3(0.0f);
-        p.pos = glm::vec3(centersX[iCenter], centersY[iCenter], 0.0f);
-        p.density = 0.0f;
-        p.generateParticle(aspectRatio);
-        particles.push_back(p);
-
-        // populating cells
-        int cellX, cellY;
-        utilPositionToGridXY( p.pos, cellX, cellY );
-        cells[cellX][cellY][iCenter] = true;
-    }
-}
-
-void Particle::updateCell(int idx, int prevX, int prevY) {
-    cells[prevX][prevY][idx] = false;
-    int x, y;
-    utilPositionToGridXY( particles[idx].pos, x, y );
-    cells[x][y][idx] = true;
-}
-
-Neighbors Particle::findNeighbors(int idx) {
-    const int   gridDim       = g_ParticleParameters.gridDim - 1;
-
-    Particle& p = particles[idx];
-    int cellX, cellY;
-    utilPositionToGridXY( p.pos, cellX, cellY );
-
-    Neighbors neighborsOut;
-    for (int i = -1; i <= 1; i++) {
-        if (cellX + i < 0 || cellX + i > gridDim) continue;
-        for (int j = -1; j <= 1; j++) {
-            if (cellY + j < 0 || cellY + j > gridDim) continue;
-            for (std::pair<int, bool> neighbor : cells[cellX + i][cellY + j]) {
-                if (neighbor.first != idx && neighbor.second)
-#if USE_NEIGHBORS_INDEX
-                    neighborsOut.push_back( neighbor.first & 0xFFFF );
-#else
-                    neighborsOut.push_back(particles[neighbor.first]);
-#endif
-            }
-        }
-    }
-#if PROFILE_NEIGHBORS
-    int numNeighbors = (int) neighborsOut.size();
-    if (g_nMaxNeighbors < numNeighbors) {
-        g_nMaxNeighbors = numNeighbors;
-    }
-#endif
-    return neighborsOut;
-}
-
-float Particle::kernelFarDensity(float dst) {
-    const float gridRadius = g_ParticleParameters.gridRadius;
-    const float scale      = g_ParticleParameters.farDensityScale;
-
-    if (dst >= gridRadius) return 0.f;
-    float val = gridRadius*gridRadius - dst*dst;
-    return val * val * val * scale;
-}
-
-float Particle::kernelNearDensity(float dst) {
-    const float gridRadius   = g_ParticleParameters.gridRadius;
-    const float ooGridRadius = g_ParticleParameters.ooGridRadius;
-
-    if (dst >= gridRadius) return 0.f;
-    float val = 1 - dst * ooGridRadius;
-    return val * val * val;
-}
-
-float Particle::kernelFarPressure(float dst) {
-    const float gridRadius   = g_ParticleParameters.gridRadius;
-    const float scale        = g_ParticleParameters.farPressureScale;
-
-    if (dst >= gridRadius) return 0.f;
-    float val = gridRadius - dst;
-    return val * val * scale;
-}
-
-float Particle::kernelNearPressure(float dst) {
-    const float gridRadius   = g_ParticleParameters.gridRadius;
-    const float ooGridRadius = g_ParticleParameters.ooGridRadius;
-
-    if (dst >= gridRadius) return 0.f;
-    float scale = -3.0f * ooGridRadius;
-    float val = 1 - dst * ooGridRadius;
-    return val * val * scale;
-}
-
-float Particle::kernelViscosity(float dst) {
-    const float gridRadius  = g_ParticleParameters.gridRadius;
-    const float scale       = g_ParticleParameters.viscosityScale;
-
-    if (dst >= gridRadius) return 0;
-    float val = gridRadius - dst;
-    return val * scale;
-}
-
 glm::vec3 Particle::calculatePressure(int idx) {
     const float targetDensity          = g_ParticleParameters.targetDensity;
     const float pressureMultiplier     = g_ParticleParameters.pressureMultiplier;
@@ -259,32 +73,6 @@ glm::vec3 Particle::calculatePressure(int idx) {
     }
 
     return force + calculateViscosity(idx, neighbors);
-}
-
-void Particle::updateDensities(int idx) {
-    const glm::vec3 homePredictedPos = particles[idx].predictedPos;
-
-    float density = 0.0f;
-    float nearDensity = 0.0f;
-    Particle& p = particles[idx];
-    Neighbors neighbors = findNeighbors(idx);
-    for (int iNeighbor = 0; iNeighbor < neighbors.size(); iNeighbor++) {
-        if (iNeighbor == idx) continue;
-
-#if USE_NEIGHBORS_INDEX
-        const int jNeighbor = neighbors[iNeighbor];
-        const Particle neighbor = particles[jNeighbor];
-#else
-        const Particle neighbor = neighbors[iNeighbor];
-#endif
-        const glm::vec3 neighborPredictedPos = neighbor.predictedPos;
-
-        float dst = glm::length(neighborPredictedPos - homePredictedPos);
-        density += kernelFarDensity(dst);
-        nearDensity += kernelNearDensity(dst);
-    }
-    p.density = density;
-    p.nearDensity = nearDensity;
 }
 
 glm::vec3 Particle::calculateViscosity(int idx, Neighbors neighbors) {
@@ -339,6 +127,180 @@ void Particle::drawParticles(int object_Location, int color_Location) {
     }
 }
 
+// See:
+// * generateRandomCenters()
+// * generateGridCenters()
+void Particle::generateGridCenters(int gridRows, int gridCols) {
+    const float space1 =     g_ParticleParameters.radius + g_ParticleParameters.spacing;
+    const float space2 = 2 * g_ParticleParameters.radius + g_ParticleParameters.spacing;
+
+    float left = 0.0f - space2 * gridCols / 2.0f;
+    float top  = 0.9f - space1;
+    for (int y = 0; y < gridRows; y++) {
+        for (int x = 0; x < gridCols; x++) {
+            Particle::centersX.push_back(left + x*space2);
+            Particle::centersY.push_back(top);
+        }
+        top -= space2;
+    }
+    g_ParticleParameters.numOfParticles = (int)Particle::centersX.size();
+}
+
+void Particle::generateParticle(float aspectRatio) {
+    const float partRadius = g_ParticleParameters.radius;
+    const int   numSegment = g_ParticleParameters.numSegments;
+
+    positions.push_back(0.0f);
+    positions.push_back(0.0f);
+
+    int startingIndex = (int)positions.size() / 2;
+
+    for (int idxSegment = 0; idxSegment <= numSegment; idxSegment++) {
+        float theta = 2.0f * M_PI * (float)idxSegment / (float)numSegment;
+        float x = partRadius * cosf(theta);
+        float y = partRadius * sinf(theta);
+        positions.push_back((x) / aspectRatio);
+        positions.push_back(y);
+
+        if (idxSegment == 0) continue;
+
+        indices.push_back(startingIndex                 );
+        indices.push_back(startingIndex + idxSegment + 0);
+        indices.push_back(startingIndex + idxSegment + 1);
+    }
+}
+
+// See:
+// * generateRandomCenters()
+// * generateGridCenters()
+void Particle::generateRandomCenters() {
+    const float r            = g_ParticleParameters.radius;
+    const int   numParticles = g_ParticleParameters.numOfParticles;
+
+    for (int iParticle = 0; iParticle < numParticles; iParticle++) {
+        Particle::centersX.push_back(glm::linearRand(-0.9f + r, 0.9f - r));
+        Particle::centersY.push_back(glm::linearRand(-0.9f + r, 0.9f - r));
+    }
+}
+
+float Particle::kernelFarDensity(float dst) {
+    const float gridRadius = g_ParticleParameters.gridRadius;
+    const float scale      = g_ParticleParameters.farDensityScale;
+
+    if (dst >= gridRadius) return 0.f;
+    float val = gridRadius*gridRadius - dst*dst;
+    return val * val * val * scale;
+}
+
+float Particle::kernelFarPressure(float dst) {
+    const float gridRadius   = g_ParticleParameters.gridRadius;
+    const float scale        = g_ParticleParameters.farPressureScale;
+
+    if (dst >= gridRadius) return 0.f;
+    float val = gridRadius - dst;
+    return val * val * scale;
+}
+
+float Particle::kernelNearDensity(float dst) {
+    const float gridRadius   = g_ParticleParameters.gridRadius;
+    const float ooGridRadius = g_ParticleParameters.ooGridRadius;
+
+    if (dst >= gridRadius) return 0.f;
+    float val = 1 - dst * ooGridRadius;
+    return val * val * val;
+}
+
+float Particle::kernelNearPressure(float dst) {
+    const float gridRadius   = g_ParticleParameters.gridRadius;
+    const float ooGridRadius = g_ParticleParameters.ooGridRadius;
+
+    if (dst >= gridRadius) return 0.f;
+    float scale = -3.0f * ooGridRadius;
+    float val = 1 - dst * ooGridRadius;
+    return val * val * scale;
+}
+
+float Particle::kernelViscosity(float dst) {
+    const float gridRadius  = g_ParticleParameters.gridRadius;
+    const float scale       = g_ParticleParameters.viscosityScale;
+
+    if (dst >= gridRadius) return 0;
+    float val = gridRadius - dst;
+    return val * scale;
+}
+
+// Read vector centers create particles
+void Particle::populate(float aspectRatio) {
+    const int gridDim    = g_ParticleParameters.gridDim;
+    const int numCenters = g_ParticleParameters.numOfParticles;
+
+    std::vector <GridCol> grid(gridDim, GridCol(gridDim)); // cells[x][y][idx]
+    Particle::cells = grid;
+
+    // generating Centers
+    for (int iCenter = 0; iCenter < numCenters; iCenter++) {
+        Particle p;
+        p.velocity = glm::vec3(0.0f);
+        p.acceleration = glm::vec3(0.0f);
+        p.pos = glm::vec3(centersX[iCenter], centersY[iCenter], 0.0f);
+        p.density = 0.0f;
+        p.generateParticle(aspectRatio);
+        particles.push_back(p);
+
+        // populating cells
+        int cellX, cellY;
+        utilPositionToGridXY( p.pos, cellX, cellY );
+        cells[cellX][cellY][iCenter] = true;
+    }
+}
+
+void Particle::reset(float aspectRatio) {
+    Particle::particles.clear();
+    populate(aspectRatio);
+}
+
+void Particle::updateBoundary() {
+    const float r = g_ParticleParameters.radius;
+
+    // check left
+    if (pos.x < -0.9f + r) pos.x = -0.9f + r, velocity.x = -velocity.x * 0.5f;
+
+    // check right
+    if (pos.x > 0.9f - r) pos.x = 0.9f  - r, velocity.x = -velocity.x * 0.5f;
+
+    // check top
+    if (pos.y > 0.9f - r) pos.y = 0.9f - r, velocity.y = -velocity.y * 0.5f;
+
+    //check bottom
+    if (pos.y < -0.9f + r) pos.y = -0.9f + r, velocity.y = -velocity.y * 0.5f;
+}
+
+void Particle::updateDensities(int idx) {
+    const glm::vec3 homePredictedPos = particles[idx].predictedPos;
+
+    float density = 0.0f;
+    float nearDensity = 0.0f;
+    Particle& p = particles[idx];
+    Neighbors neighbors = findNeighbors(idx);
+    for (int iNeighbor = 0; iNeighbor < neighbors.size(); iNeighbor++) {
+        if (iNeighbor == idx) continue;
+
+#if USE_NEIGHBORS_INDEX
+        const int jNeighbor = neighbors[iNeighbor];
+        const Particle neighbor = particles[jNeighbor];
+#else
+        const Particle neighbor = neighbors[iNeighbor];
+#endif
+        const glm::vec3 neighborPredictedPos = neighbor.predictedPos;
+
+        float dst = glm::length(neighborPredictedPos - homePredictedPos);
+        density += kernelFarDensity(dst);
+        nearDensity += kernelNearDensity(dst);
+    }
+    p.density = density;
+    p.nearDensity = nearDensity;
+}
+
 void Particle::updateParticles() {
     const float stepSize     = g_ParticleParameters.stepSize;
     const float gravity      = g_ParticleParameters.GRAVITY_MAGNITUDE;
@@ -376,4 +338,43 @@ void Particle::updateParticles() {
         // velocity clamp
         if (velMag > maxSpeed) p.velocity = maxSpeed * p.velocity / velMag;
     }
+}
+
+// Spatial Partitioning
+Neighbors Particle::findNeighbors(int idx) {
+    const int   gridDim       = g_ParticleParameters.gridDim - 1;
+
+    Particle& p = particles[idx];
+    int cellX, cellY;
+    utilPositionToGridXY( p.pos, cellX, cellY );
+
+    Neighbors neighborsOut;
+    for (int i = -1; i <= 1; i++) {
+        if (cellX + i < 0 || cellX + i > gridDim) continue;
+        for (int j = -1; j <= 1; j++) {
+            if (cellY + j < 0 || cellY + j > gridDim) continue;
+            for (std::pair<int, bool> neighbor : cells[cellX + i][cellY + j]) {
+                if (neighbor.first != idx && neighbor.second)
+#if USE_NEIGHBORS_INDEX
+                    neighborsOut.push_back( neighbor.first & 0xFFFF );
+#else
+                    neighborsOut.push_back(particles[neighbor.first]);
+#endif
+            }
+        }
+    }
+#if PROFILE_NEIGHBORS
+    int numNeighbors = (int) neighborsOut.size();
+    if (g_nMaxNeighbors < numNeighbors) {
+        g_nMaxNeighbors = numNeighbors;
+    }
+#endif
+    return neighborsOut;
+}
+
+void Particle::updateCell(int idx, int prevX, int prevY) {
+    cells[prevX][prevY][idx] = false;
+    int x, y;
+    utilPositionToGridXY( particles[idx].pos, x, y );
+    cells[x][y][idx] = true;
 }
