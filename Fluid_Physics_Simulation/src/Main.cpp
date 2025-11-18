@@ -530,7 +530,8 @@ int main(int numArgs, const char *aArgs[])
         << "    Particles: "            <<                                         width << " x " << height << std::endl
         << "    Total particles: "      <<                                         numParticles          << std::endl
         << "    Centers: "              <<                                         numCenters            << std::endl
-        << "    Grid dimensions: "      <<                                         gridDim               << std::endl;
+        << "    Grid dimensions: "      << std::setw(3) << std::setprecision(0) << gridDim
+        << " at "                       << std::setw(7) << std::setprecision(5) << g_ParticleParameters.gridRadius << " m/tile" << std::endl;
 #else
     printf( "Configuration: (C printf)\n" );
     printf( "    First Render Frame: # %s\n", sFirstFrame );
@@ -538,7 +539,7 @@ int main(int numArgs, const char *aArgs[])
     printf( "    Particles: %d x %d\n", width, height );
     printf( "    Total particles: %llu\n", numParticles );
     printf( "    Centers: %llu\n", numCenters );
-    printf( "    Grid dimensions: %d\n", gridDim );
+    printf( "    Grid dimensions: %d at %7.5f m/tile\n", gridDim, g_ParticleParameters.gridRadius );
 #endif
 
     simulationPaused = pauseAtStart;
