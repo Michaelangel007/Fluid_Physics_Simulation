@@ -558,8 +558,9 @@ int main(int numArgs, const char *aArgs[])
         bool bDraw = (numFrame >= numFirstRenderFrame);
         bool bRunning = (g_eSimulationState == STATE_RUNNING) && !simulationPaused;
         if (bRunning)
-            Particle::updateElements(object_Location, color_Location);
-        Particle::drawElements(object_Location, color_Location, bDraw, numFrame);
+            Particle::updateParticles();
+        if (bDraw)
+            Particle::drawParticles(object_Location, color_Location);
         if (showGrid)
             drawGrid(object_Location, color_Location);
         Window::drawRectangle(object_Location, color_Location, &g_WorldBoundary);

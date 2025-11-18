@@ -22,6 +22,14 @@ unsigned int Particle::vao = 0;
 unsigned int Particle::vbo = 0;
 unsigned int Particle::ibo = 0;
 
+glm::vec3 utilVelocityToColor(const Particle& p) {
+    float speed = glm::length(p.velocity);
+    float scale = std::min( speed / g_ParticleParameters.MAX_SPEED, 1.f ); // Clamp color to 0.0 .. 1.0
+    glm::vec3 color = glm::vec3(0.0f);
+    utilColorMapping( scale, color );
+    return color;
+}
+
 void checkBoundary(Particle& p) {
     const float r = g_ParticleParameters.radius;
 
@@ -162,7 +170,7 @@ Neighbors Particle::findNeighbors(int idx) {
     return neighborsOut;
 }
 
-float Particle::densityKernel(float dst) {
+float Particle::kernelFarDensity(float dst) {
     const float gridRadius = g_ParticleParameters.gridRadius;
     const float scale      = g_ParticleParameters.farDensityScale;
 
@@ -171,7 +179,7 @@ float Particle::densityKernel(float dst) {
     return val * val * val * scale;
 }
 
-float Particle::nearDensityKernel(float dst) {
+float Particle::kernelNearDensity(float dst) {
     const float gridRadius   = g_ParticleParameters.gridRadius;
     const float ooGridRadius = g_ParticleParameters.ooGridRadius;
 
@@ -180,7 +188,7 @@ float Particle::nearDensityKernel(float dst) {
     return val * val * val;
 }
 
-float Particle::pressureKernel(float dst) {
+float Particle::kernelFarPressure(float dst) {
     const float gridRadius   = g_ParticleParameters.gridRadius;
     const float scale        = g_ParticleParameters.farPressureScale;
 
@@ -189,7 +197,7 @@ float Particle::pressureKernel(float dst) {
     return val * val * scale;
 }
 
-float Particle::nearPressureKernel(float dst) {
+float Particle::kernelNearPressure(float dst) {
     const float gridRadius   = g_ParticleParameters.gridRadius;
     const float ooGridRadius = g_ParticleParameters.ooGridRadius;
 
@@ -199,7 +207,7 @@ float Particle::nearPressureKernel(float dst) {
     return val * val * scale;
 }
 
-float Particle::viscosityKernel(float dst) {
+float Particle::kernelViscosity(float dst) {
     const float gridRadius  = g_ParticleParameters.gridRadius;
     const float scale       = g_ParticleParameters.viscosityScale;
 
@@ -208,7 +216,7 @@ float Particle::viscosityKernel(float dst) {
     return val * scale;
 }
 
-glm::vec3 Particle::pressure(int idx) {
+glm::vec3 Particle::calculatePressure(int idx) {
     const float targetDensity          = g_ParticleParameters.targetDensity;
     const float pressureMultiplier     = g_ParticleParameters.pressureMultiplier;
     const float nearPressureMultiplier = g_ParticleParameters.nearPressureMultiplier;
@@ -237,8 +245,8 @@ glm::vec3 Particle::pressure(int idx) {
         glm::vec3 dir = delta / dst;
         float dens = std::max(neighborDensity, 1e-4f);
 
-        float influence = pressureKernel(dst);
-        float nearInfluence = nearPressureKernel(dst);
+        float influence = kernelFarPressure(dst);
+        float nearInfluence = kernelNearPressure(dst);
 
         float pressureA = (neighborDensity - targetDensity) * pressureMultiplier;
         float pressureB = (homeDensity     - targetDensity) * pressureMultiplier;
@@ -250,7 +258,7 @@ glm::vec3 Particle::pressure(int idx) {
         force += dir * sharedPressure;
     }
 
-    return force + viscosity(idx, neighbors);
+    return force + calculateViscosity(idx, neighbors);
 }
 
 void Particle::calculateDensities(int idx) {
@@ -272,14 +280,14 @@ void Particle::calculateDensities(int idx) {
         const glm::vec3 neighborPredictedPos = neighbor.predictedPos;
 
         float dst = glm::length(neighborPredictedPos - homePredictedPos);
-        density += densityKernel(dst);
-        nearDensity += nearDensityKernel(dst);
+        density += kernelFarDensity(dst);
+        nearDensity += kernelNearDensity(dst);
     }
     p.density = density;
     p.nearDensity = nearDensity;
 }
 
-glm::vec3 Particle::viscosity(int idx, Neighbors neighbors) {
+glm::vec3 Particle::calculateViscosity(int idx, Neighbors neighbors) {
     const float viscosityMultiplier = g_ParticleParameters.viscosityMultiplier;
     const glm::vec3 homeVel = particles[idx].velocity;
 
@@ -298,51 +306,40 @@ glm::vec3 Particle::viscosity(int idx, Neighbors neighbors) {
         float dst = glm::length(delta);
         if (dst < 1e-6f) continue;
         glm::vec3 dir = delta / dst;
-        float influence = viscosityKernel(dst);
+        float influence = kernelViscosity(dst);
         force += (neighborVel - homeVel) * influence;
     }
     return force * viscosityMultiplier * particles[idx].density;
 }
 
-glm::vec3 velToColor(Particle p) {
-    float speed = glm::length(p.velocity);
-    float scale = std::min( speed / g_ParticleParameters.MAX_SPEED, 1.f ); // Clamp color to 0.0 .. 1.0
-    glm::vec3 color = glm::vec3(0.0f);
-    utilColorMapping( scale, color );
-    return color;
-}
+void Particle::drawParticles(int object_Location, int color_Location) {
+    const int numSegments  = g_ParticleParameters.numSegments;
+    const int numParticles = (int)particles.size();
+    const int offset       = numParticles * (numSegments + 2);
 
-void Particle::drawElements(int object_Location, int color_Location, bool bDraw,int frame) {
-    if (bDraw)
-    {
-        const int numSegments  = g_ParticleParameters.numSegments;
-        const int numParticles = (int)particles.size();
-        const int offset       = numParticles * (numSegments + 2);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, 2 * offset * sizeof(float), positions.data(), GL_DYNAMIC_DRAW);
 
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, 2 * offset * sizeof(float), positions.data(), GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * offset * sizeof(unsigned int), indices.data(), GL_DYNAMIC_DRAW);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * offset * sizeof(unsigned int), indices.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    glEnableVertexAttribArray(0);
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
-        glEnableVertexAttribArray(0);
+    // Draw Loop
+    for (int i = 0; i < numParticles; ++i) {
+        Particle& p = particles[i];
+        glm::vec3 color = utilVelocityToColor(p);
 
-        // Draw Loop
-        for (int i = 0; i < numParticles; ++i) {
-            Particle& p = particles[i];
-            glm::vec3 color = velToColor(p);
+        glUniform4f(object_Location, p.pos.x, p.pos.y, 0.0, 0.0f);
+        glUniform3f(color_Location, color.r, color.g, color.b);
 
-            glUniform4f(object_Location, p.pos.x, p.pos.y, 0.0, 0.0f);
-            glUniform3f(color_Location, color.r, color.g, color.b);
-
-            glDrawElements(GL_TRIANGLES, 3 * numSegments, GL_UNSIGNED_INT, (void*)(i * 3 * numSegments * sizeof(unsigned int)));
-        }
+        glDrawElements(GL_TRIANGLES, 3 * numSegments, GL_UNSIGNED_INT, (void*)(i * 3 * numSegments * sizeof(unsigned int)));
     }
 }
 
-void Particle::updateElements(int object_Location, int color_Location) {
+void Particle::updateParticles() {
     const float stepSize     = g_ParticleParameters.stepSize;
     const float gravity      = g_ParticleParameters.GRAVITY_MAGNITUDE;
     const float maxSpeed     = g_ParticleParameters.MAX_SPEED;
@@ -372,7 +369,7 @@ void Particle::updateElements(int object_Location, int color_Location) {
     for (int i = 0; i < particles.size(); ++i) {
         Particle& p = particles[i];
         float dens = std::max(particles[i].density, 1e-4f);
-        p.acceleration = pressure(i) / dens;
+        p.acceleration = calculatePressure(i) / dens;
         p.acceleration.y -= gravity;
         p.velocity += stepSize * p.acceleration;
         float velMag = glm::length(p.velocity);
