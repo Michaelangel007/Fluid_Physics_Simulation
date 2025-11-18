@@ -343,11 +343,14 @@ static void displayStats(const int numFrame) {
     if (elapsed < 1e-6)
         elapsed = 1e-6; // Alt.: std::numeric_limits<float>::infinity();
 
-    double frames  = (double)numFrame; // frames
-    double avgFPS  = frames / elapsed; // frames/second
-    double avgFTms = (1.0 / avgFPS) * 1000.0; // ms
+    double   frames      = (double)numFrame; // frames
+    double   avgFPS      = frames / elapsed; // frames/second
+    double   avgFTms     = (1.0 / avgFPS) * 1000.0; // ms
+    double   particleUPS = (g_ParticleParameters.numOfParticles * frames) / elapsed;
+    uint64_t nPartUPS    = (uint64_t)particleUPS;
+    uint64_t kPartUPS    = (nPartUPS / 1000ull);
 
-    sprintf( output, "Total Frames: %d / Total Elapsed: %7.3f s = Avg FPS: %7.3f, Avg Frametime: %7.3f ms \n", numFrame, elapsed , avgFPS, avgFTms );
+    sprintf( output, "Total Frames: %d / Total Elapsed: %7.3f s = Avg FPS: %7.3f, Avg Frametime: %7.3f ms\nParticle Updates/s: ~%llu  (%llu K/s)\n", numFrame, elapsed , avgFPS, avgFTms, nPartUPS, kPartUPS );
 #if USE_CPP_IOSTREAM
     std::cout << output;
 #else
