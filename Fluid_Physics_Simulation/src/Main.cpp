@@ -517,7 +517,6 @@ int main(int numArgs, const char *aArgs[])
     if (numFirstRenderFrame != INT_MAX)
         sprintf( sFirstFrame, "%d", numFirstRenderFrame );
     const size_t numParticles = Particle::particles.size();
-    const size_t numCenters   = Particle::centersX.size();
     const int    gridDim      = g_ParticleParameters.gridDim;
 
 #if USE_CPP_IOSTREAM
@@ -529,7 +528,6 @@ int main(int numArgs, const char *aArgs[])
         << "    Last Physics Seconds: " << std::setw(7) << std::setprecision(3) << numLastPhysicsSeconds << std::endl
         << "    Particles: "            <<                                         width << " x " << height << std::endl
         << "    Total particles: "      <<                                         numParticles          << std::endl
-        << "    Centers: "              <<                                         numCenters            << std::endl
         << "    Grid dimensions: "      << std::setw(3) << std::setprecision(0) << gridDim
         << " at "                       << std::setw(7) << std::setprecision(5) << g_ParticleParameters.gridRadius << " m/tile" << std::endl;
 #else
@@ -538,7 +536,6 @@ int main(int numArgs, const char *aArgs[])
     printf( "    Last Physics Seconds: %7.3f\n", numLastPhysicsSeconds );
     printf( "    Particles: %d x %d\n", width, height );
     printf( "    Total particles: %llu\n", numParticles );
-    printf( "    Centers: %llu\n", numCenters );
     printf( "    Grid dimensions: %d at %7.5f m/tile\n", gridDim, g_ParticleParameters.gridRadius );
 #endif
 
