@@ -51,7 +51,9 @@ void usage()
     const char *HELP =
 "-?              Display command line options and quit.\n"
 "--help          Alias for -?.\n"
-"-benchmark      Run simulation for 3 minutes (~10,800 frames @ 60fps), render first frame at frame number 7,200.\n"
+"-benchmark      Run simulation for 3 minutes, never render, no vysnc. Equivalent to:\n"
+"                    -render -1 -time 180 -vsync\n"
+"-benchslow      Run simulation for 3 minutes (~10,800 frames @ 60fps), render first frame at frame number 7,200.\n"
 "-benchfast      Run simulation for 10 seconds (~600 frames @ 60fps), render first frame at frame number 300.\n"
 "-createcenter   Generate particles in grid centers.\n"
 "-createrandom   Generate particles in random positions.\n"
@@ -108,6 +110,13 @@ void parseCommandLine(int nArgs, const char* aArgs[])
             }
             else
             if (strcmp(pArg, "-benchmark") == 0) {
+                numFirstRenderFrame = INT_MAX; // never render
+                numLastPhysicsSeconds = 3.0 * 60.0; // 3 min * 60 s/min = 180 seconds
+                benchmark = true;
+                vsync = false;
+            }
+            else
+            if (strcmp(pArg, "-benchslow") == 0) {
                 numFirstRenderFrame   = 2*60 * 60; // 2 min * 60 s/min * 60 frames/s = 7,200 frames
                 numLastPhysicsSeconds = 3.0 * 60.0; // 3 min * 60 s/min = 180 seconds
                 benchmark = true;
