@@ -57,7 +57,7 @@ static void usage()
 "-benchfast      Run simulation for 10 seconds (~600 frames @ 60fps), render first frame at frame number 300.\n"
 "-createcenter   Generate particles in grid centers.\n"
 "-createrandom   Generate particles in random positions.\n"
-"-h              Specifiy grid height (rows).\n"
+"-h              Specify grid height (rows).\n"
 "-height         Alias for -h.\n"
 "-pause          Pause at both stand and end of simulation waiting for ENTER to be pressed.\n"
 "-pausestart     Pause at start of simulation waiting for ENTER to be pressed.\n"
