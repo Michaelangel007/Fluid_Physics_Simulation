@@ -22,7 +22,7 @@ unsigned int Particle::vao = 0;
 unsigned int Particle::vbo = 0;
 unsigned int Particle::ibo = 0;
 
-glm::vec3 utilVelocityToColor(const Particle& p) {
+static glm::vec3 utilVelocityToColor(const Particle& p) {
     float speed = glm::length(p.velocity);
     float scale = std::min( speed / g_ParticleParameters.MAX_SPEED, 1.f ); // Clamp color to 0.0 .. 1.0
     glm::vec3 color = glm::vec3(0.0f);

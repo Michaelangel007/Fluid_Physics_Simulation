@@ -46,7 +46,7 @@ std::vector <float> g_WorldBoundary = {
     -0.9f, -0.9f  // Bot Left
 };
 
-void usage()
+static void usage()
 {
     const char *HELP =
 "-?              Display command line options and quit.\n"
@@ -82,7 +82,7 @@ void usage()
 #endif
 }
 
-void version()
+static void version()
 {
 #if USE_CPP_IOSTREAM
     std::cout
@@ -93,7 +93,7 @@ void version()
 #endif
 }
 
-void parseCommandLine(int nArgs, const char* aArgs[])
+static void parseCommandLine(int nArgs, const char* aArgs[])
 {
     const char *pArg = nullptr;
     int         iArg = 1;
@@ -270,7 +270,7 @@ void parseCommandLine(int nArgs, const char* aArgs[])
     }
 }
 
-void updateTitleBarState(GLFWwindow* pWindow) {
+static void updateTitleBarState(GLFWwindow* pWindow) {
     const SimulationState state = g_eSimulationState;
     const char *aPaused[2] =
     {
@@ -336,7 +336,7 @@ static void callbackInput(GLFWwindow* pWindow, int key, int scancode, int action
     }
 }
 
-void displayStats(const int numFrame) {
+static void displayStats(const int numFrame) {
     double elapsed = g_nElapsed;
     if (elapsed < 1e-6)
         elapsed = 1e-6; // Alt.: std::numeric_limits<float>::infinity();
