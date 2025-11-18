@@ -337,6 +337,8 @@ static void callbackInput(GLFWwindow* pWindow, int key, int scancode, int action
 }
 
 static void displayStats(const int numFrame) {
+    char output[1024];
+
     double elapsed = g_nElapsed;
     if (elapsed < 1e-6)
         elapsed = 1e-6; // Alt.: std::numeric_limits<float>::infinity();
@@ -344,16 +346,12 @@ static void displayStats(const int numFrame) {
     double frames  = (double)numFrame; // frames
     double avgFPS  = frames / elapsed; // frames/second
     double avgFTms = (1.0 / avgFPS) * 1000.0; // ms
-#if USE_CPP_IOSTREAM
-    std::cout
-        <<   "Total Frames: "  <<                                         numFrame << " "
-        << "/ Total Elapsed: " << std::setw(7) << std::setprecision(3) << elapsed << " s "
-        << "= Avg FPS: "       << std::setw(7) << std::setprecision(3) << avgFPS
-        << ", Avg Frametime: " << std::setw(7) << std::setprecision(3) << avgFTms << " ms"
-        << std::endl;
-#else
-    printf( "Total Frames: %d / Total Elapsed: %7.3f s = Avg FPS: %7.3f, Avg Frametime: %7.3f ms \n", numFrame, elapsed , avgFPS, avgFTms );
 
+    sprintf( output, "Total Frames: %d / Total Elapsed: %7.3f s = Avg FPS: %7.3f, Avg Frametime: %7.3f ms \n", numFrame, elapsed , avgFPS, avgFTms );
+#if USE_CPP_IOSTREAM
+    std::cout << output;
+#else
+    printf( output );
     #if PROFILE_NEIGHBORS
         printf( "Max neighbors: %d\n", g_nMaxNeighbors );
     #endif
@@ -470,6 +468,8 @@ void drawGrid(GLint object_Location, GLint color_Location) {
 
 int main(int numArgs, const char *aArgs[])
 {
+    char output[1024];
+
     g_ParticleParameters.initParticleParameters();
     parseCommandLine( numArgs, aArgs );
 
@@ -519,24 +519,32 @@ int main(int numArgs, const char *aArgs[])
     const size_t numParticles = Particle::particles.size();
     const int    gridDim      = g_ParticleParameters.gridDim;
 
+    sprintf( output,
+        "Configuration: "
 #if USE_CPP_IOSTREAM
-    std::cout.precision(6);
-    std::cout
-        << "Configuration: (C++ iostream)" << std::endl
-        << std::fixed
-        << "    First Render Frame: # " <<                                         sFirstFrame           << std::endl
-        << "    Last Physics Seconds: " << std::setw(7) << std::setprecision(3) << numLastPhysicsSeconds << std::endl
-        << "    Particles: "            <<                                         width << " x " << height << std::endl
-        << "    Total particles: "      <<                                         numParticles          << std::endl
-        << "    Grid dimensions: "      << std::setw(3) << std::setprecision(0) << gridDim
-        << " at "                       << std::setw(7) << std::setprecision(5) << g_ParticleParameters.gridRadius << " m/tile" << std::endl;
+                        "(C++ iostream)\n"
 #else
-    printf( "Configuration: (C printf)\n" );
-    printf( "    First Render Frame: # %s\n", sFirstFrame );
-    printf( "    Last Physics Seconds: %7.3f\n", numLastPhysicsSeconds );
-    printf( "    Particles: %d x %d\n", width, height );
-    printf( "    Total particles: %llu\n", numParticles );
-    printf( "    Grid dimensions: %d at %7.5f m/tile\n", gridDim, g_ParticleParameters.gridRadius );
+                        "(C printf)\n"
+#endif
+        "    First Render Frame: # %s\n"
+        "    Last Physics Seconds: %7.3f\n"
+        "    Create Particles: %d x %d %s"
+        "    Total particles: %llu\n"
+        "    Grid dimensions: %d at %7.5f m/tile\n"
+        , sFirstFrame
+        , numLastPhysicsSeconds
+        , width, height
+        , createGridCenters
+          ? "(grid)\n"
+          : "(random)\n"
+        , numParticles
+        , gridDim, g_ParticleParameters.gridRadius
+    );
+
+#if USE_CPP_IOSTREAM
+    std::cout << output;
+#else
+    printf( output );
 #endif
 
     simulationPaused = pauseAtStart;
