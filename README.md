@@ -8,12 +8,13 @@ Original code by Spleen0291. Optimized, QoL and cleanup by me.
 
 # Optimizations
 
-| Description         | Timing | Branch | % Faster |
-|:--------------------|-------:|:-------|---------:|
-| Original            | 4.3 ms | [cleanup_benchmark](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_benchmark) |   0% |
-| Particle Properties | 4.3 ms | [cleanup_particle](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_particle)   |   0% |
-| Neighbor index      | 3.8 ms | fluid cleanup                                                                                           |  13% |
-| Fixed Neighbor array| 1.3 ms | [fluid cleanup](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/fluid_cleanup)         | 230% |
+| Description         | Timing   | Branch | % Faster |
+|:--------------------|---------:|:-------|---------:|
+| Original            | 4.312 ms | [cleanup_benchmark](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_benchmark)      |   0% |
+| Particle Properties | 4.312 ms | [cleanup_particle](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_particle)        |   0% |
+| Neighbor index      | 3.844 ms | fluid cleanup                                                                                                |  12% |
+| Fixed Neighbor array| 1.329 ms | [fluid cleanup](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/fluid_cleanup)              | 224% |
+| Cache kernel scalars| 1.236 ms | [kernel_optimizations](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/kernel_optimizations)| 248% |
 
 # Command Line Options
 
