@@ -54,9 +54,10 @@ struct ParticleParameters
 
 		numSegments = 16;
 
-		gridRadius = 0.05f;
+		gridRadius   = 0.05f;
 		ooGridRadius = 1.0f / gridRadius;
-		gridDim    = (int)(2.0f / gridRadius); // (2.0f / 0.05f) -> 40
+		gridDim      = (int)(2.0f / gridRadius); // (2.0f / 0.05f) -> 40
+		assert(("Grid Radius not larger then Particle Radius", gridRadius > 5.0f * radius));
 
 		farDensityScale  =   4.0f / (M_PI * std::powf(gridRadius, 8.0f));
 		farPressureScale = -30.0f / (M_PI * std::powf(gridRadius, 5.0f));
