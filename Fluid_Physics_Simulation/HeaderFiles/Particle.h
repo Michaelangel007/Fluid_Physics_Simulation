@@ -140,6 +140,7 @@ public:
 	static float kernelFarPressure(float dst);
 	static float kernelNearPressure(float dst);
 	static float kernelViscosity(float dst);
+	       void updateBoundary();
 	static void updateParticles();
 	static void drawParticles(int object_Location, int color_Location);
 };

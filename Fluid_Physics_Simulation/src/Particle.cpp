@@ -30,20 +30,20 @@ glm::vec3 utilVelocityToColor(const Particle& p) {
     return color;
 }
 
-void checkBoundary(Particle& p) {
+void Particle::updateBoundary() {
     const float r = g_ParticleParameters.radius;
 
     // check left
-    if (p.pos.x < -0.9f + r) p.pos.x = -0.9f + r, p.velocity.x = -p.velocity.x * 0.5f;
+    if (pos.x < -0.9f + r) pos.x = -0.9f + r, velocity.x = -velocity.x * 0.5f;
 
     // check right
-    if (p.pos.x > 0.9f - r) p.pos.x = 0.9f  - r, p.velocity.x = -p.velocity.x * 0.5f;
+    if (pos.x > 0.9f - r) pos.x = 0.9f  - r, velocity.x = -velocity.x * 0.5f;
 
     // check top
-    if (p.pos.y > 0.9f - r) p.pos.y = 0.9f - r, p.velocity.y = -p.velocity.y * 0.5f;
+    if (pos.y > 0.9f - r) pos.y = 0.9f - r, velocity.y = -velocity.y * 0.5f;
 
     //check bottom
-    if (p.pos.y < -0.9f + r) p.pos.y = -0.9f + r, p.velocity.y = -p.velocity.y * 0.5f;
+    if (pos.y < -0.9f + r) pos.y = -0.9f + r, velocity.y = -velocity.y * 0.5f;
 }
 
 // See:
@@ -350,7 +350,7 @@ void Particle::updateParticles() {
         int cellX, cellY;
         utilPositionToGridXY( p.pos, cellX, cellY );
         p.pos += stepSize * p.velocity;
-        checkBoundary(p);
+        p.updateBoundary();
         updateCell(i, cellX, cellY);
     }
 
