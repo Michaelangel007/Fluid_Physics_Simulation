@@ -48,10 +48,12 @@ The command line options can be displayed with `-?` or `--help`:
 
 # Hotkeys
 
+* `ESC` to quit the simulation.
+* `ENTER` or `SPACE` to start the simulation if paused on start. The title bar will show the status.
 * `SPACE` to toggle pause/running.
-* `ENTER` to start the simulation if paused on start. The title bar will show the status.
-* `R` to reset the simulation.
+* `.` to single step the simulation forward one frame.
 * `G` to toggle display of the (neighbor spatial) grid.
+* `R` to reset the simulation.
 
 # Example Command-Line
 
@@ -59,15 +61,17 @@ The command line options can be displayed with `-?` or `--help`:
 
 # Benchmarking
 
-There are two benchmark modes:
+There are three benchmark modes:
 
 * `-benchmark`
 * `-benchfast`
+* `-benchslow`
 
-| Command | Rendering starts at frame # | Simulation ends at time |
-|:-------------|------:|-----------:|
-| `-benchfast` |   300 | 10 seconds |
-| `-benchmark` | 7,200 |  3 minutes |
+| Command | Rendering starts at frame # | Simulation ends at time | VSync |
+|:-------------|------:|-----------:|----:|
+| `-benchmark` |   n/a | 3 minutes  | Off |
+| `-benchfast` |   300 | 10 seconds | On |
+| `-benchslow` | 7,200 |  3 minutes | On |
 
 I used `-render -1 -time 180 -vsync` for benchmarking without rendering.
 
