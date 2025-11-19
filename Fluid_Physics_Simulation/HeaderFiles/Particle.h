@@ -96,6 +96,11 @@ inline void utilPositionToGridXY(const glm::vec3 pos, int& x, int& y)
     cellPos *= ooGridRadius;
     x = (int)cellPos.x;
     y = (int)cellPos.y;
+
+    assert( ("Particle Out-of-Bounds in Spatial Partitioning: left"  , x >= 0) );
+    assert( ("Particle Out-of-Bounds in Spatial Partitioning: bottom", y >= 0) );
+    assert( ("Particle Out-of-Bounds in Spatial Partitioning: right" , x < g_ParticleParameters.gridDim) );
+    assert( ("Particle Out-of-Bounds in Spatial Partitioning: top"   , y < g_ParticleParameters.gridDim) );
 }
 
 typedef std::unordered_map<int, bool> GridOccupancy;
