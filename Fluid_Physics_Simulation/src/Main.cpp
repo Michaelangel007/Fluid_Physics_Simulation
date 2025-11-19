@@ -330,6 +330,12 @@ static void callbackInput(GLFWwindow* pWindow, int key, int scancode, int action
                 simulationPaused = !simulationPaused;
                 updateTitleBarState(pWindow);
             }
+            else
+            if (g_eSimulationState == STATE_WAITING_TO_RUN) {
+                g_eSimulationState = STATE_RUNNING;
+                simulationPaused = false;
+                updateTitleBarState(pWindow);
+            }
         }
         else
         if (key == '.') { // Frame Step Next
