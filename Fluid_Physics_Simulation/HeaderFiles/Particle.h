@@ -113,7 +113,7 @@ typedef std::vector <GridOccupancy>   GridCol;
 			Neighbors()
 			: arraySize(0)
 			{}
-			const size_t size() { return arraySize; }
+			const size_t size() const    { return arraySize; }
 			void push_back(uint16_t val) { arrayData[ arraySize++ ] = val; assert(arraySize <= USE_FIXED_NEIGHBORS_SIZE); }
 
 			      uint16_t  operator[](const int index)       { return arrayData[index]; }
