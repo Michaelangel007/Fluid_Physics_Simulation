@@ -133,9 +133,10 @@ void Particle::drawParticles(int object_Location, int color_Location) {
 void Particle::generateGridCenters(int gridRows, int gridCols) {
     const float space1 =     g_ParticleParameters.radius + g_ParticleParameters.spacing;
     const float space2 = 2 * g_ParticleParameters.radius + g_ParticleParameters.spacing;
+    const float y0     =     g_ParticleParameters.vWorldVertices[1]; // Top
 
     float left = 0.0f - space2 * gridCols / 2.0f;
-    float top  = 0.9f - space1;
+    float top  = y0   - space1;
     for (int y = 0; y < gridRows; y++) {
         for (int x = 0; x < gridCols; x++) {
             Particle::centersX.push_back(left + x*space2);
@@ -174,12 +175,13 @@ void Particle::generateParticle(float aspectRatio) {
 // * generateRandomCenters()
 // * generateGridCenters()
 void Particle::generateRandomCenters() {
-    const float r            = g_ParticleParameters.radius;
     const int   numParticles = g_ParticleParameters.numOfParticles;
+    const float nMin         = g_ParticleParameters.vCollisionMinMax.x;
+    const float nMax         = g_ParticleParameters.vCollisionMinMax.y;
 
     for (int iParticle = 0; iParticle < numParticles; iParticle++) {
-        Particle::centersX.push_back(glm::linearRand(-0.9f + r, 0.9f - r));
-        Particle::centersY.push_back(glm::linearRand(-0.9f + r, 0.9f - r));
+        Particle::centersX.push_back(glm::linearRand(nMin, nMax));
+        Particle::centersY.push_back(glm::linearRand(nMin, nMax));
     }
 }
 
@@ -260,19 +262,14 @@ void Particle::reset(float aspectRatio) {
 }
 
 void Particle::updateBoundary() {
-    const float r = g_ParticleParameters.radius;
+    const float nMin = g_ParticleParameters.vCollisionMinMax.x;
+    const float nMax = g_ParticleParameters.vCollisionMinMax.y;
 
-    // check left
-    if (pos.x < -0.9f + r) pos.x = -0.9f + r, velocity.x = -velocity.x * 0.5f;
+         if (pos.x < nMin) pos.x = nMin, velocity.x = -velocity.x * 0.5f;
+    else if (pos.x > nMax) pos.x = nMax, velocity.x = -velocity.x * 0.5f;
 
-    // check right
-    if (pos.x > 0.9f - r) pos.x = 0.9f  - r, velocity.x = -velocity.x * 0.5f;
-
-    // check top
-    if (pos.y > 0.9f - r) pos.y = 0.9f - r, velocity.y = -velocity.y * 0.5f;
-
-    //check bottom
-    if (pos.y < -0.9f + r) pos.y = -0.9f + r, velocity.y = -velocity.y * 0.5f;
+         if (pos.y > nMax) pos.y = nMax, velocity.y = -velocity.y * 0.5f;
+    else if (pos.y < nMin) pos.y = nMin, velocity.y = -velocity.y * 0.5f;
 }
 
 void Particle::updateDensities(int idx) {

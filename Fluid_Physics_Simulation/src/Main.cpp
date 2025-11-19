@@ -38,14 +38,6 @@ enum SimulationState
 };
 SimulationState g_eSimulationState = STATE_INIT;
 
-// Defining static variables
-std::vector <float> g_WorldBoundary = {
-    -0.9f,  0.9f, // Top Left
-     0.9f,  0.9f, // Top Right
-     0.9f, -0.9f, // Bot Right
-    -0.9f, -0.9f  // Bot Left
-};
-
 static void usage()
 {
     const char *HELP =
@@ -572,7 +564,7 @@ int main(int numArgs, const char *aArgs[])
             Particle::drawParticles(object_Location, color_Location);
         if (showGrid)
             drawGrid(object_Location, color_Location);
-        Window::drawRectangle(object_Location, color_Location, &g_WorldBoundary);
+        Window::drawRectangle(object_Location, color_Location, &g_ParticleParameters.vWorldVertices);
 
         //calculate FPS
         double currentTime = glfwGetTime();

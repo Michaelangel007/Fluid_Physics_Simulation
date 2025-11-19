@@ -23,6 +23,9 @@ struct ParticleParameters
 	float gridRadius;
 	float ooGridRadius;
 
+	glm::vec3           vCollisionMinMax;
+	std::vector <float> vWorldVertices;
+
 	float farDensityScale;  //   4.0f / (M_PI * std::powf(gridRadius, 8.0f));
 	float farPressureScale; // -30.0f / (M_PI * std::powf(gridRadius, 5.0f));
 	float viscosityScale;   //  40.0f / (M_PI * std::powf(gridRadius, 5.0f));
@@ -53,6 +56,23 @@ struct ParticleParameters
 		viscosityMultiplier = 0.0002f;
 
 		numSegments = 16;
+
+		const float nMin = -0.9f;
+		const float nMax = +0.9f;
+
+		// World Border
+		const float aWorld[] = {
+			nMin, nMax, // Top Left
+			nMax, nMax, // Top Right
+			nMax, nMin, // Bot Right
+			nMin, nMin  // Bot Left
+		};
+		const size_t nWorld = sizeof( aWorld ) / sizeof(aWorld[0]);
+		std::vector <float> WorldVertices(aWorld, aWorld + nWorld);
+		vWorldVertices = WorldVertices;
+
+		// Collision Border inset by particle radius
+		vCollisionMinMax = glm::vec3( nMin + radius, nMax - radius, 0.0f );
 
 		gridRadius   = 0.05f;
 		ooGridRadius = 1.0f / gridRadius;
