@@ -284,6 +284,11 @@ static void updateTitleBarState(GLFWwindow* pWindow) {
 
 static void callbackInput(GLFWwindow* pWindow, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS) {
+        if (key == GLFW_KEY_ESCAPE) {
+            g_eSimulationState = STATE_DONE;
+            glfwSetWindowShouldClose(pWindow, 1);
+        }
+        else
         if (key == GLFW_KEY_ENTER) {
             switch (g_eSimulationState) {
                 case STATE_WAITING_TO_RUN:
