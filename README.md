@@ -73,7 +73,7 @@ There are three benchmark modes:
 | `-benchfast` |   300 | 10 seconds | On |
 | `-benchslow` | 7,200 |  3 minutes | On |
 
-I used `-render -1 -time 180 -vsync` for benchmarking without rendering.
+The command line `-benchmark` is equivalent to `-render -1 -time 180 -vsync`.
 
 # Cleanup and Optimization History
 
