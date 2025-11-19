@@ -13,6 +13,7 @@ static const char  *APP_VERSION  = "Version 1.5";
 static float  g_nAspectRatio        = 1.0f;
 static bool   benchmark             = false;
 static bool   createGridCenters     = true;
+static bool   bFrameStep            = false;
 static bool   pauseAtStart          = false;
 static bool   pauseAtEnd            = false;
 static bool   simulationPaused      = false;
@@ -325,6 +326,10 @@ static void callbackInput(GLFWwindow* pWindow, int key, int scancode, int action
                 updateTitleBarState(pWindow);
             }
         }
+        else
+        if (key == '.') { // Frame Step Next
+            bFrameStep = true;
+        }
     }
 }
 
@@ -558,7 +563,7 @@ int main(int numArgs, const char *aArgs[])
 
         bool bDraw = (numFrame >= numFirstRenderFrame);
         bool bRunning = (g_eSimulationState == STATE_RUNNING) && !simulationPaused;
-        if (bRunning)
+        if (bRunning || bFrameStep)
             Particle::updateParticles();
         if (bDraw)
             Particle::drawParticles(object_Location, color_Location);
@@ -568,7 +573,8 @@ int main(int numArgs, const char *aArgs[])
 
         //calculate FPS
         double currentTime = glfwGetTime();
-        if (bRunning) {
+        if (bRunning || bFrameStep) {
+            bFrameStep = false;
             numFrame++;
             double deltaTime = currentTime - lastTime;
                    g_nElapsed += deltaTime;
