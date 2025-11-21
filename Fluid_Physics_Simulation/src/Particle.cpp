@@ -271,8 +271,6 @@ void Particle::updateDensities(int idx) {
 
     const Neighbors& neighbors = vSpatialPartitionNeighbors[ idx ];
     for (int iNeighbor = 0; iNeighbor < neighbors.size(); iNeighbor++) {
-//        if (iNeighbor == idx) continue; // BUG? Why ignore first neighbor??
-
         const int jNeighbor = neighbors[iNeighbor];
         const Particle neighbor = particles[jNeighbor];
         const glm::vec3 neighborPredictedPos = neighbor.predictedPos;
