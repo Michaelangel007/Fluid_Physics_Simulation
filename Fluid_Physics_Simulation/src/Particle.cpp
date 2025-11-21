@@ -280,8 +280,6 @@ void Particle::updateDensities(int idx) {
     Particle& p = particles[idx];
     Neighbors neighbors = findNeighbors(idx);
     for (int iNeighbor = 0; iNeighbor < neighbors.size(); iNeighbor++) {
-        if (iNeighbor == idx) continue;
-
 #if USE_NEIGHBORS_INDEX
         const int jNeighbor = neighbors[iNeighbor];
         const Particle neighbor = particles[jNeighbor];
