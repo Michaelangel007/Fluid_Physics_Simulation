@@ -89,30 +89,26 @@ extern ParticleParameters g_ParticleParameters;
 typedef std::unordered_map<int, bool> GridOccupancy;
 typedef std::vector <GridOccupancy>   GridCol;
 
-#if USE_NEIGHBORS_INDEX
-	#if USE_FIXED_NEIGHBORS_SIZE
-		struct Neighbors
+#if USE_FIXED_NEIGHBORS_SIZE
+	struct Neighbors
+	{
+		Neighbors()
+		: arraySize(0)
 		{
-			Neighbors()
-			: arraySize(0)
-			{
-				memset( arrayData, 0, sizeof(arrayData) );
-			}
-			void clear()                 { arraySize = 0; }
-			const size_t size() const    { return arraySize; }
-			void push_back(uint16_t val) { arrayData[ arraySize++ ] = val; assert(arraySize <= USE_FIXED_NEIGHBORS_SIZE); }
+			memset( arrayData, 0, sizeof(arrayData) );
+		}
+		void clear()                 { arraySize = 0; }
+		const size_t size() const    { return arraySize; }
+		void push_back(uint16_t val) { arrayData[ arraySize++ ] = val; assert(arraySize <= USE_FIXED_NEIGHBORS_SIZE); }
 
-			      uint16_t  operator[](const int index)       { return arrayData[index]; }
-			const uint16_t& operator[](const int index) const { return arrayData[index]; }
+		      uint16_t  operator[](const int index)       { return arrayData[index]; }
+		const uint16_t& operator[](const int index) const { return arrayData[index]; }
 
-			size_t  arraySize;
-			int16_t arrayData[ USE_FIXED_NEIGHBORS_SIZE ];
-		};
-	#else
-		typedef std::vector<int16_t> Neighbors;
-	#endif
+		size_t  arraySize;
+		int16_t arrayData[ USE_FIXED_NEIGHBORS_SIZE ];
+	};
 #else
-	typedef std::vector<Particle> Neighbors;
+	typedef std::vector<int16_t> Neighbors;
 #endif
 
 class Particle

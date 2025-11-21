@@ -42,12 +42,8 @@ glm::vec3 Particle::calculatePressure(int idx) {
 
     for (int iNeighbor = 0; iNeighbor < neighbors.size(); ++iNeighbor) {
         // TODO: Since we only have max 64 neighbors we should probably multi-thread the particles not the neighbors
-#if USE_NEIGHBORS_INDEX
         const int jNeighbor = neighbors[iNeighbor];
         const Particle neighbor = particles[jNeighbor];
-#else
-        const Particle neighbor = neighbors[iNeighbor];
-#endif
         const glm::vec3 neighborPos         = neighbor.pos;
         const float     neighborDensity     = neighbor.density;
         const float     neighborNearDensity = neighbor.nearDensity;
@@ -277,12 +273,8 @@ void Particle::updateDensities(int idx) {
     for (int iNeighbor = 0; iNeighbor < neighbors.size(); iNeighbor++) {
 //        if (iNeighbor == idx) continue; // BUG? Why ignore first neighbor??
 
-#if USE_NEIGHBORS_INDEX
         const int jNeighbor = neighbors[iNeighbor];
         const Particle neighbor = particles[jNeighbor];
-#else
-        const Particle neighbor = neighbors[iNeighbor];
-#endif
         const glm::vec3 neighborPredictedPos = neighbor.predictedPos;
 
         float dst = glm::length(neighborPredictedPos - homePredictedPos);
