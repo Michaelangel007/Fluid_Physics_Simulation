@@ -15,6 +15,7 @@ std::vector <Particle>     Particle::particles;
 
 // Spatial Partition
 std::vector <GridCol>    Particle::vSpatialPartitionGridCells(1,GridCol(1)); // [x][y][idx] = true/false
+std::vector< Neighbors > Particle::vSpatialPartitionNeighbors;
 
 unsigned int Particle::vao = 0;
 unsigned int Particle::vbo = 0;
@@ -37,7 +38,7 @@ glm::vec3 Particle::calculatePressure(int idx) {
     const float     homeDensity(particles[idx].density);
 
     glm::vec3 force = glm::vec3(0.0f);
-    Neighbors neighbors = findNeighbors(idx);
+    const Neighbors& neighbors = Particle::vSpatialPartitionNeighbors[idx];
 
     for (int iNeighbor = 0; iNeighbor < neighbors.size(); ++iNeighbor) {
         // TODO: Since we only have max 64 neighbors we should probably multi-thread the particles not the neighbors
@@ -69,33 +70,31 @@ glm::vec3 Particle::calculatePressure(int idx) {
         sharedPressure += nearInfluence * nearPressure;
         force += dir * sharedPressure;
     }
-
-    return force + calculateViscosity(idx, neighbors);
+    return force + calculateViscosity(idx);
 }
 
-glm::vec3 Particle::calculateViscosity(int idx, Neighbors neighbors) {
+glm::vec3 Particle::calculateViscosity(int iParticle) {
     const float viscosityMultiplier = g_ParticleParameters.viscosityMultiplier;
-    const glm::vec3 homeVel = particles[idx].velocity;
+    const glm::vec3 homeVel = particles[iParticle].velocity;
 
     glm::vec3 force = glm::vec3(0.0f);
+    const Neighbors& neighbors = vSpatialPartitionNeighbors[ iParticle ];
+
     for (int iNeighbor = 0; iNeighbor < neighbors.size(); ++iNeighbor) {
-#if USE_NEIGHBORS_INDEX
         const int jNeighbor = neighbors[iNeighbor];
         const Particle neighbor = particles[jNeighbor];
-#else
-        const Particle neighbor = neighbors[iNeighbor];
-#endif
         const glm::vec3 neighborPos = neighbor.pos;
         const glm::vec3 neighborVel = neighbor.velocity;
 
-        const glm::vec3 delta(neighborPos - particles[idx].pos);
+        const glm::vec3 delta(neighborPos - particles[iParticle].pos);
         float dst = glm::length(delta);
         if (dst < 1e-6f) continue;
         glm::vec3 dir = delta / dst;
         float influence = kernelViscosity(dst);
         force += (neighborVel - homeVel) * influence;
     }
-    return force * viscosityMultiplier * particles[idx].density;
+
+    return force * viscosityMultiplier * particles[iParticle].density;
 }
 
 void Particle::drawParticles(int object_Location, int color_Location) {
@@ -273,8 +272,11 @@ void Particle::updateDensities(int idx) {
     float density = 0.0f;
     float nearDensity = 0.0f;
     Particle& p = particles[idx];
-    Neighbors neighbors = findNeighbors(idx);
+
+    const Neighbors& neighbors = vSpatialPartitionNeighbors[ idx ];
     for (int iNeighbor = 0; iNeighbor < neighbors.size(); iNeighbor++) {
+//        if (iNeighbor == idx) continue; // BUG? Why ignore first neighbor??
+
 #if USE_NEIGHBORS_INDEX
         const int jNeighbor = neighbors[iNeighbor];
         const Particle neighbor = particles[jNeighbor];
@@ -310,18 +312,19 @@ void Particle::updateParticles() {
     for (int i = 0; i < particles.size(); ++i) {
         Particle& p = particles[i];
         p.predictedPos = p.pos + stepSize * p.velocity;
+        updateNeighbors(i);
     }
     
     // calculate densities
     for (int i = 0; i < particles.size(); ++i) {
-        updateDensities(i);
+        updateDensities(i); // findNeighbors() -> getNeighbors
     }
 
     // apply pressure force
     for (int i = 0; i < particles.size(); ++i) {
         Particle& p = particles[i];
         float dens = std::max(particles[i].density, 1e-4f);
-        p.acceleration = calculatePressure(i) / dens;
+        p.acceleration = calculatePressure(i) / dens; // findNeighbors() -> getNeighbors()
         p.acceleration.y -= gravity;
         p.velocity += stepSize * p.acceleration;
         float velMag = glm::length(p.velocity);
@@ -341,35 +344,30 @@ void Particle::addPositionToGrid(const int iParticle) {
 void Particle::initSpatialPartition(const int nParticles, const int nGridDim) {
     std::vector <GridCol> grid(nGridDim, GridCol(nGridDim)); // cells[x][y][idx]
     vSpatialPartitionGridCells = grid;
+
+    vSpatialPartitionNeighbors.reserve(nParticles);
+    for (int iParticle = 0; iParticle < (int)nParticles; iParticle++) {
+        Neighbors neighbor;
+        vSpatialPartitionNeighbors.push_back( neighbor );
+    }
 }
 
-Neighbors Particle::findNeighbors(int idx) {
-    const int   gridDim       = g_ParticleParameters.gridDim - 1;
-
-    Particle& p = particles[idx];
+void Particle::updateNeighbors(const int iParticle) {
+    Particle& p = particles[iParticle];
     int cellX, cellY;
     utilPositionToGridXY( p.pos, cellX, cellY );
 
-    Neighbors neighborsOut;
+    Neighbors& neighborsOut = vSpatialPartitionNeighbors[iParticle];
+    neighborsOut.clear();
+
     for (int i = -1; i <= 1; i++) {
         for (int j = -1; j <= 1; j++) {
             for (std::pair<int, bool> neighbor : vSpatialPartitionGridCells[cellX + i][cellY + j]) {
-                if (neighbor.first != idx && neighbor.second)
-#if USE_NEIGHBORS_INDEX
+                if (neighbor.first != iParticle && neighbor.second)
                     neighborsOut.push_back( neighbor.first & 0xFFFF );
-#else
-                    neighborsOut.push_back(particles[neighbor.first]);
-#endif
             }
         }
     }
-#if PROFILE_NEIGHBORS
-    int numNeighbors = (int) neighborsOut.size();
-    if (g_nMaxNeighbors < numNeighbors) {
-        g_nMaxNeighbors = numNeighbors;
-    }
-#endif
-    return neighborsOut;
 }
 
 void Particle::updateCell(const int iParticle, const int iPrevCol, const int iPrevRow) {

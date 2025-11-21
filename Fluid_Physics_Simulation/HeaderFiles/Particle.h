@@ -137,7 +137,7 @@ public:
 	static unsigned int ibo;
 
 	static glm::vec3 calculatePressure(int idx);
-	static glm::vec3 calculateViscosity(int idx, Neighbors neighbors);
+	static glm::vec3 calculateViscosity(int idx);
 	static void drawParticles(int object_Location, int color_Location);
 	static void generateGridCenters(int rows, int cols);
 	       void generateParticle(float aspectRatio);
@@ -155,10 +155,12 @@ public:
 
 	// Spatial Partitioning
 	static std::vector< GridCol >   vSpatialPartitionGridCells;
+	static std::vector< Neighbors > vSpatialPartitionNeighbors; // aNeighbors[ NUM_PARTICLES ];
+
 	static void addPositionToGrid(const int iParticle);
-	static Neighbors findNeighbors(int idx);
 	static void initSpatialPartition(const int nParticles, const int nGridDim);
 	static void updateCell(const int iParticle, const int iPrevCol, const int iPrevRow);
+	static void updateNeighbors(const int nParticles);
 inline
     static void utilPositionToGridXY(const glm::vec3 pos, int& x, int& y)
     {
