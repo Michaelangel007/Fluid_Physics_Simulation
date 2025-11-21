@@ -88,6 +88,15 @@ static void version()
 #endif
 }
 
+static void warnCommandLineOption(const char* pArg)
+{
+#if USE_CPP_IOSTREAM
+                std::cout << "Warning: Skipping unknown argument: " << pArg << std::endl;
+#else
+                printf( "Warning: Skipping unknown argument: %s\n", pArg );
+#endif
+}
+
 static void parseCommandLine(int nArgs, const char* aArgs[])
 {
     const char *pArg = nullptr;
@@ -260,11 +269,7 @@ static void parseCommandLine(int nArgs, const char* aArgs[])
                 exit(0);
             }
             else {
-#if USE_CPP_IOSTREAM
-                std::cout << "Warning: Skipping unknown argument: " << pArg << std::endl;
-#else
-                printf( "Warning: Skipping unknown argument: %s\n", pArg );
-#endif
+                warnCommandLineOption( pArg );
             }
         }
         else
@@ -281,6 +286,9 @@ static void parseCommandLine(int nArgs, const char* aArgs[])
             if (strcmp(pArg, "+vsync") == 0) {
                 vsync = true;
             }
+        }
+        else {
+                warnCommandLineOption( pArg );
         }
 
         iArg++;
