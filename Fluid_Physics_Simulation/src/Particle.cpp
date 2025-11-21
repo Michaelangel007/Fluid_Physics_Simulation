@@ -13,10 +13,8 @@ std::vector <float>        Particle::positions;
 std::vector <unsigned int> Particle::indices;
 std::vector <Particle>     Particle::particles;
 
-// Can't use ctor cells(size, GridCol(size)) since particle radius is no longer a static.
-//int size = 2.0f / Particle::s_Radius;
-//std::vector <std::vector <std::unordered_map<int, bool>>> Particle::cells(size, std::vector <std::unordered_map<int, bool>> (size));
-std::vector <GridCol> Particle::cells(1,GridCol(1)); // [x][y][idx] = true/false
+// Spatial Partition
+std::vector <GridCol>    Particle::vSpatialPartitionGridCells(1,GridCol(1)); // [x][y][idx] = true/false
 
 unsigned int Particle::vao = 0;
 unsigned int Particle::vbo = 0;
@@ -236,8 +234,8 @@ void Particle::populate(float aspectRatio) {
     const int gridDim    = g_ParticleParameters.gridDim;
     const int numCenters = g_ParticleParameters.numOfParticles;
 
-    std::vector <GridCol> grid(gridDim, GridCol(gridDim)); // cells[x][y][idx]
-    Particle::cells = grid;
+    particles.clear();
+    initSpatialPartition( numCenters, gridDim );
 
     // generating Centers
     for (int iCenter = 0; iCenter < numCenters; iCenter++) {
@@ -250,14 +248,11 @@ void Particle::populate(float aspectRatio) {
         particles.push_back(p);
 
         // populating cells
-        int cellX, cellY;
-        utilPositionToGridXY( p.pos, cellX, cellY );
-        cells[cellX][cellY][iCenter] = true;
+        addPositionToGrid( iCenter );
     }
 }
 
 void Particle::reset(float aspectRatio) {
-    Particle::particles.clear();
     populate(aspectRatio);
 }
 
@@ -336,6 +331,18 @@ void Particle::updateParticles() {
 }
 
 // Spatial Partitioning
+void Particle::addPositionToGrid(const int iParticle) {
+    const glm::vec3 vPosition = particles[iParticle].pos;
+    int cellX, cellY;
+    utilPositionToGridXY( vPosition, cellX, cellY );
+    vSpatialPartitionGridCells[cellX][cellY][iParticle] = true;
+}
+
+void Particle::initSpatialPartition(const int nParticles, const int nGridDim) {
+    std::vector <GridCol> grid(nGridDim, GridCol(nGridDim)); // cells[x][y][idx]
+    vSpatialPartitionGridCells = grid;
+}
+
 Neighbors Particle::findNeighbors(int idx) {
     const int   gridDim       = g_ParticleParameters.gridDim - 1;
 
@@ -346,7 +353,7 @@ Neighbors Particle::findNeighbors(int idx) {
     Neighbors neighborsOut;
     for (int i = -1; i <= 1; i++) {
         for (int j = -1; j <= 1; j++) {
-            for (std::pair<int, bool> neighbor : cells[cellX + i][cellY + j]) {
+            for (std::pair<int, bool> neighbor : vSpatialPartitionGridCells[cellX + i][cellY + j]) {
                 if (neighbor.first != idx && neighbor.second)
 #if USE_NEIGHBORS_INDEX
                     neighborsOut.push_back( neighbor.first & 0xFFFF );
@@ -365,9 +372,7 @@ Neighbors Particle::findNeighbors(int idx) {
     return neighborsOut;
 }
 
-void Particle::updateCell(int idx, int prevX, int prevY) {
-    cells[prevX][prevY][idx] = false;
-    int x, y;
-    utilPositionToGridXY( particles[idx].pos, x, y );
-    cells[x][y][idx] = true;
+void Particle::updateCell(const int iParticle, const int iPrevCol, const int iPrevRow) {
+    vSpatialPartitionGridCells[iPrevCol][iPrevRow][iParticle] = false;
+    addPositionToGrid( iParticle );
 }

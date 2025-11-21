@@ -86,23 +86,6 @@ struct ParticleParameters
 };
 extern ParticleParameters g_ParticleParameters;
 
-inline void utilPositionToGridXY(const glm::vec3 pos, int& x, int& y)
-{
-    const glm::vec3 translate(1.0f, 1.0f, 0.0f);
-    const float ooGridRadius = g_ParticleParameters.ooGridRadius;
-
-    glm::vec3 cellPos = pos;
-    cellPos += translate;
-    cellPos *= ooGridRadius;
-    x = (int)cellPos.x;
-    y = (int)cellPos.y;
-
-    assert( ("Particle Out-of-Bounds in Spatial Partitioning: left"  , x >= 0) );
-    assert( ("Particle Out-of-Bounds in Spatial Partitioning: bottom", y >= 0) );
-    assert( ("Particle Out-of-Bounds in Spatial Partitioning: right" , x < g_ParticleParameters.gridDim) );
-    assert( ("Particle Out-of-Bounds in Spatial Partitioning: top"   , y < g_ParticleParameters.gridDim) );
-}
-
 typedef std::unordered_map<int, bool> GridOccupancy;
 typedef std::vector <GridOccupancy>   GridCol;
 
@@ -112,7 +95,10 @@ typedef std::vector <GridOccupancy>   GridCol;
 		{
 			Neighbors()
 			: arraySize(0)
-			{}
+			{
+				memset( arrayData, 0, sizeof(arrayData) );
+			}
+			void clear()                 { arraySize = 0; }
 			const size_t size() const    { return arraySize; }
 			void push_back(uint16_t val) { arrayData[ arraySize++ ] = val; assert(arraySize <= USE_FIXED_NEIGHBORS_SIZE); }
 
@@ -137,7 +123,6 @@ public:
 	static std::vector <float>        centersX;
 	static std::vector <float>        centersY;
 	static std::vector <Particle>     particles;
-	static std::vector <GridCol>      cells;
 
 	glm::vec3 pos;
 	glm::vec3 predictedPos;
@@ -169,6 +154,26 @@ public:
 	static void updateParticles();
 
 	// Spatial Partitioning
+	static std::vector< GridCol >   vSpatialPartitionGridCells;
+	static void addPositionToGrid(const int iParticle);
 	static Neighbors findNeighbors(int idx);
-	static void updateCell(int idx, int prevRow, int prevCol);
+	static void initSpatialPartition(const int nParticles, const int nGridDim);
+	static void updateCell(const int iParticle, const int iPrevCol, const int iPrevRow);
+inline
+    static void utilPositionToGridXY(const glm::vec3 pos, int& x, int& y)
+    {
+        const glm::vec3 translate(1.0f, 1.0f, 0.0f);
+        const float ooGridRadius = g_ParticleParameters.ooGridRadius;
+
+        glm::vec3 cellPos = pos;
+        cellPos += translate;
+        cellPos *= ooGridRadius;
+        x = (int)cellPos.x;
+        y = (int)cellPos.y;
+
+        assert( ("Particle Out-of-Bounds in Spatial Partitioning: left"  , x >= 0) );
+        assert( ("Particle Out-of-Bounds in Spatial Partitioning: bottom", y >= 0) );
+        assert( ("Particle Out-of-Bounds in Spatial Partitioning: right" , x < g_ParticleParameters.gridDim) );
+        assert( ("Particle Out-of-Bounds in Spatial Partitioning: top"   , y < g_ParticleParameters.gridDim) );
+    }
 };

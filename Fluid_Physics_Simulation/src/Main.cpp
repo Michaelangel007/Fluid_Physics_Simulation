@@ -422,7 +422,7 @@ void drawGrid(GLint object_Location, GLint color_Location) {
     for (int iParticle = 0; iParticle < nParticles; iParticle++) {
         const Particle* pParticle = &Particle::particles[iParticle];
         int iGridCellX, iGridCellY;
-        utilPositionToGridXY( pParticle->pos, iGridCellX, iGridCellY );
+        Particle::utilPositionToGridXY( pParticle->pos, iGridCellX, iGridCellY );
         int iGridCell = (iGridCellY* nGridCell) + iGridCellX;
         vGridOccupancy[ iGridCell ]++;
 
