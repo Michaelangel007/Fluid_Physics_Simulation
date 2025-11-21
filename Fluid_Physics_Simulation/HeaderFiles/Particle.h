@@ -134,20 +134,20 @@ public:
 
 	static glm::vec3 calculatePressure(int idx);
 	static glm::vec3 calculateViscosity(int idx);
-	static void drawParticles(int object_Location, int color_Location);
-	static void generateGridCenters(int rows, int cols);
-	       void generateParticle(float aspectRatio);
-	static void generateRandomCenters();
+	static void  drawParticles(int object_Location, int color_Location);
+	static void  generateGridCenters(int rows, int cols);
+	       void  generateParticle(float aspectRatio);
+	static void  generateRandomCenters();
 	static float kernelFarDensity(float dst);
 	static float kernelFarPressure(float dst);
 	static float kernelNearDensity(float dst);
 	static float kernelNearPressure(float dst);
 	static float kernelViscosity(float dst);
-	static void populate(float aspectRatio);
-	static void reset(float aspectRatio);
-	       void updateBoundary();
-	static void updateDensities(int idx);
-	static void updateParticles();
+	static void  populate(float aspectRatio);
+	static void  reset(float aspectRatio);
+	       void  updateBoundary();
+	static void  updateDensities(int idx);
+	static void  updateParticles();
 
 	// Spatial Partitioning
 	static std::vector< GridCol >   vSpatialPartitionGridCells;
