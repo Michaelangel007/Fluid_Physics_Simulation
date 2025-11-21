@@ -8,13 +8,14 @@ Original code by Spleen0291. Optimized, QoL and cleanup by me.
 
 # Optimizations
 
-| Description         | Timing   | Branch | % Faster |
+| Description         | ms/frame | Branch | % Faster |
 |:--------------------|---------:|:-------|---------:|
 | Original            | 4.312 ms | [cleanup_benchmark](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_benchmark)      |   0% |
 | Particle Properties | 4.312 ms | [cleanup_particle](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_particle)        |   0% |
 | Neighbor index      | 3.844 ms | fluid cleanup                                                                                                |  12% |
 | Fixed Neighbor array| 1.329 ms | [fluid cleanup](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/fluid_cleanup)              | 224% |
 | Cache kernel scalars| 1.236 ms | [kernel_optimizations](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/kernel_optimizations)| 248% |
+| 1-pass find neighbors| 0.825 ms | [cleanup_spatial_partition](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_spatial_partition)| 422% |
 
 # Command Line Options
 
