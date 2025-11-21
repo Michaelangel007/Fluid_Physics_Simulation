@@ -345,9 +345,7 @@ Neighbors Particle::findNeighbors(int idx) {
 
     Neighbors neighborsOut;
     for (int i = -1; i <= 1; i++) {
-        if (cellX + i < 0 || cellX + i > gridDim) continue;
         for (int j = -1; j <= 1; j++) {
-            if (cellY + j < 0 || cellY + j > gridDim) continue;
             for (std::pair<int, bool> neighbor : cells[cellX + i][cellY + j]) {
                 if (neighbor.first != idx && neighbor.second)
 #if USE_NEIGHBORS_INDEX
