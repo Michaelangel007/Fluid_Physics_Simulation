@@ -1,10 +1,12 @@
 // 4.152ms -> 3.844 ms
 // Instead of returning a complete copy of a particle we only return its index.
-#define USE_NEIGHBORS_INDEX 1
-#if USE_NEIGHBORS_INDEX
-	// 3.844 ms -> 1.329 ms
-	// If USE_NEIGHBORS_INDEX is enabled we can further use a static array instead of a dynamic vector
-	#define USE_FIXED_NEIGHBORS_SIZE 76
+// 3.844 ms -> 1.329 ms
+// Use a static array instead of a dynamic vector
+#define USE_FIXED_NEIGHBORS_SIZE 76
+
+#define USE_OPENMP 1
+#if USE_OPENMP
+#include <omp.h>
 #endif
 
 //#define SHOW_MAX_OCCUPANCY_ONLY 1

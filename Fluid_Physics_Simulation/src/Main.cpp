@@ -24,9 +24,10 @@ static int    numFirstRenderFrame   = 0;
 static double numLastPhysicsSeconds = 0.0;
 static int    width = 25;
 static int    height = 20;
+static int    g_nThreadsActive  = 0;
+static int    g_nThreadsMaximum = 0;
 
 static double g_nElapsed            = 0.0;
-
 
 enum SimulationState
 {
@@ -52,6 +53,7 @@ static void usage()
 "-createrandom   Generate particles in random positions.\n"
 "-h              Specify grid height (rows).\n"
 "-height         Alias for -h.\n"
+"-j #            Use specified number of threads. (Default is max detected.)\n"
 "-pause          Pause at both stand and end of simulation waiting for ENTER to be pressed.\n"
 "-pausestart     Pause at start of simulation waiting for ENTER to be pressed.\n"
 "-pauseend       Pause at end of simulation waiting for ENTER to be pressed.\n"
@@ -147,6 +149,28 @@ static void parseCommandLine(int nArgs, const char* aArgs[])
                     height = 1;
             }
             else
+#if USE_OPENMP
+            if (strcmp(pArg, "-j") == 0) {
+                iArg++;
+                if (iArg >= nArgs) {
+                    const char *ERROR = "ERROR: Number of threads not specified.\n";
+#if USE_CPP_IOSTREAM
+                    std::cout << ERROR;
+#else
+                    printf( "ERROR" );
+#endif
+                    exit(1);
+                }
+                pArg = aArgs[ iArg ];
+                int nThreads = atoi( pArg );
+                if (nThreads < 1)
+                    nThreads = 1;
+                if (nThreads > g_nThreadsMaximum)
+                    nThreads = g_nThreadsMaximum;
+                g_nThreadsActive = nThreads;
+            }
+            else
+#endif // USE_OPENMP
             if (strcmp(pArg, "-pause") == 0) {
                 pauseAtStart = true;
                 pauseAtEnd = true;
@@ -477,12 +501,33 @@ void drawGrid(GLint object_Location, GLint color_Location) {
     }
 }
 
+void ThreadsActive() {
+#if USE_OPENMP
+    if (!g_nThreadsActive)
+         g_nThreadsActive = g_nThreadsMaximum;
+
+    omp_set_num_threads( g_nThreadsActive );
+#else
+    g_nThreadsActive = 1;
+#endif
+}
+
+void ThreadsDefault() {
+#if USE_OPENMP
+    g_nThreadsMaximum = omp_get_num_procs();
+#else
+    g_nThreadsMaximum = 1;
+#endif
+}
+
 int main(int numArgs, const char *aArgs[])
 {
     char output[1024];
 
+    ThreadsDefault();
     g_ParticleParameters.initParticleParameters();
     parseCommandLine( numArgs, aArgs );
+    ThreadsActive();
 
     Window window(1600, 1000, vsync);
     GLFWwindow *pWindow = window.win;
@@ -537,11 +582,13 @@ int main(int numArgs, const char *aArgs[])
 #else
                         "(C printf)\n"
 #endif
+        "    Multi-threading: %d / %d\n"
         "    First Render Frame: # %s\n"
         "    Last Physics Seconds: %7.3f\n"
         "    Create Particles: %d x %d %s"
         "    Total particles: %llu\n"
         "    Grid dimensions: %d at %7.5f m/tile\n"
+        , g_nThreadsActive, g_nThreadsMaximum
         , sFirstFrame
         , numLastPhysicsSeconds
         , width, height

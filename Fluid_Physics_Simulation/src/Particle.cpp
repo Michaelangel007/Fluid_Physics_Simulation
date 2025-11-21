@@ -309,13 +309,15 @@ void Particle::updateParticles() {
     }
 
     // predict positions for density calculations
+#pragma omp parallel for
     for (int i = 0; i < particles.size(); ++i) {
         Particle& p = particles[i];
         p.predictedPos = p.pos + stepSize * p.velocity;
         updateNeighbors(i);
     }
-    
+
     // calculate densities
+#pragma omp parallel for
     for (int i = 0; i < particles.size(); ++i) {
         updateDensities(i); // findNeighbors() -> getNeighbors
     }
