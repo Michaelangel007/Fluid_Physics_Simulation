@@ -164,3 +164,25 @@ After:
 ```
 
 We are only single-threaded (!) so there is still performance on the table!
+
+* `findNeighbors()` does a redundant check if are out-of-bounds on the spatial partition grid but since we have a skirt this is unecessary. Sadly this doesn't give us any performance uplift but it does simply the code 
+
+Before:
+```c++
+    for (int i = -1; i <= 1; i++) {
+        if (cellX + i < 0 || cellX + i > gridDim) continue;
+        for (int j = -1; j <= 1; j++) {
+            if (cellY + j < 0 || cellY + j > gridDim) continue;
+            for (std::pair<int, bool> neighbor : cells[cellX + i][cellY + j]) {
+```
+
+After:
+```c++
+    for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            for (std::pair<int, bool> neighbor : cells[cellX + i][cellY + j]) {
+```
+
+* If we look at `updateDensities()` we seen that it calls `findNeighbors()` and that `calculatePressure()` again calls `findNeighbors()` **re-calculating all the neighbors!** Instead if we do two things:
+  * Pre-allocate a list of neighbors for each particle.
+  * Calculate neighbors once per frame caching the results and have `updateDensities()` and `calculatePressure()` use the cached neighbors. This gives us a time of 1.236 ms -> 0.825 ms which is 49% faster. The total time faster compared to the original is now a whopping 422% faster!
