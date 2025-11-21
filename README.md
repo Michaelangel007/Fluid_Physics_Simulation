@@ -10,12 +10,13 @@ Original code by Spleen0291. Optimized, QoL and cleanup by me.
 
 | Description         | ms/frame | Branch | % Faster |
 |:--------------------|---------:|:-------|---------:|
-| Original            | 4.312 ms | [cleanup_benchmark](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_benchmark)      |   0% |
-| Particle Properties | 4.312 ms | [cleanup_particle](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_particle)        |   0% |
-| Neighbor index      | 3.844 ms | fluid cleanup                                                                                                |  12% |
-| Fixed Neighbor array| 1.329 ms | [fluid cleanup](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/fluid_cleanup)              | 224% |
-| Cache kernel scalars| 1.236 ms | [kernel_optimizations](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/kernel_optimizations)| 248% |
-| 1-pass find neighbors| 0.825 ms | [cleanup_spatial_partition](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_spatial_partition)| 422% |
+| Original            | 4.312 ms | [cleanup_benchmark](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_benchmark)                |   0% |
+| Particle Properties | 4.312 ms | [cleanup_particle](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_particle)                  |   0% |
+| Neighbor index      | 3.844 ms | fluid cleanup                                                                                                          |  12% |
+| Fixed Neighbor array| 1.329 ms | [fluid cleanup](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/fluid_cleanup)                        | 224% |
+| Cache kernel scalars| 1.236 ms | [kernel_optimizations](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/kernel_optimizations)          | 248% |
+|1-pass find neighbors| 0.825 ms | [cleanup_spatial_partition](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_spatial_partition)| 422% |
+| Multithread support | 0.407 ms | [multithread_support](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/multithread_support)            | 959% |
 
 # Command Line Options
 
@@ -26,26 +27,31 @@ The command line options can be displayed with `-?` or `--help`:
 --help          Alias for -?.
 -benchmark      Run simulation for 3 minutes (~10,800 frames @ 60fps), render first frame at frame number 7,200.
 -benchfast      Run simulation for 10 seconds (~600 frames @ 60fps), render first frame at frame number 300.
--createcenter   Generate particles in grid centers.
+-createcenter   Generate particles in grid centers. (DEFAULT.)
 -createrandom   Generate particles in random positions.
--h              Specifiy grid height (rows).
+-h              Specifiy grid height (rows). (DEFAULT 20 rows.)
 -height         Alias for -h.
+-j #            Use specified number of threads. (DEFAULT is max detected.)
 -pause          Pause at both stand and end of simulation waiting for ENTER to be pressed.
 -pausestart     Pause at start of simulation waiting for ENTER to be pressed.
 -pauseend       Pause at end of simulation waiting for ENTER to be pressed.
--render #       Don't render until specified frame number. -1 is never render. (Default 0).
--showgrid       Hide neighbor grid. (Press G to toggle displaying the grid.)
+-render #       Don't render until specified frame number. -1 is never render. (DEFAULT 0.)
+-showgrid       Hide neighbor grid. Press G to toggle displaying the grid. (DEFAULT off.)
 +showgrid       Show neighbor grid.
 -time #.##      Run simulation for specified seconds.
--v              Verbose mode off (default).
+-v              Verbose mode off (DEFAULT.)
 +v              Verbose mode on.
 -V              Display version and quit.
 --version       Alias for -V.
 -vsync          VSync off.
-+vsync          VSync on (default).
--w              Specify grid width (columns).
++vsync          VSync on. (DEFAULT on.)
+-w              Specify grid width (DEFAULT 25 columns).
 -width          Alias for -w.
 ```
+
+# Single-Thread vs Multi-Threaded
+
+By default all threads are used. One will need to experiment to find the optimal value for your system. i.e. For my 24-core/48-thread Threadripper using -`j 16` provides the best results.
 
 # Hotkeys
 
@@ -186,3 +192,38 @@ After:
 * If we look at `updateDensities()` we seen that it calls `findNeighbors()` and that `calculatePressure()` again calls `findNeighbors()` **re-calculating all the neighbors!** Instead if we do two things:
   * Pre-allocate a list of neighbors for each particle.
   * Calculate neighbors once per frame caching the results and have `updateDensities()` and `calculatePressure()` use the cached neighbors. This gives us a time of 1.236 ms -> 0.825 ms which is 49% faster. The total time faster compared to the original is now a whopping 422% faster!
+* With most (all?) of the low hanging fruit out of the way we can finally dive into multi-threading.
+* I naïvely added multi-threading to the spatial partition of `std::unordered_map` but that "blew up" because `std::unordered_map` is not thread safe.  The typical HACK is to use a mutex but that kills performance due to the over-head of spin locks (constantly locking and waiting for the lock to be free.)
+```c++
+void Particle::updateParticles() {
+
+    omp_lock_t lockWrite;
+    omp_init_lock( &lockWrite );
+
+    for (int i = 0; i < particles.size(); ++i) {
+        omp_set_lock(&lockWrite);
+            updateCell(i, cellX, cellY);
+        omp_unset_lock(&lockWrite);```
+```
+
+* Instead we can multi-thread the rest of `updateParticles()`
+* It turns out we can two lines to get a significant multi-threaded performance uplift:
+```c++
+void Particle::updateParticles() {
+
+    // predict positions for density calculations
+#pragma omp parallel for
+    for (int i = 0; i < particles.size(); ++i) {
+        Particle& p = particles[i];
+        p.predictedPos = p.pos + stepSize * p.velocity;
+        updateNeighbors(i);
+    }
+
+    // calculate densities
+#pragma omp parallel for
+    for (int i = 0; i < particles.size(); ++i) {
+        updateDensities(i); // findNeighbors() -> getNeighbors
+    }
+```
+* Our timing with -`j 16` is now 0.407 ms or a whopping 959% faster!
+* Replacing the heart of the Spatial Partition's `std::unordered_map` with a [more performant one](https://martin.ankerl.com/2022/08/27/hashmap-bench-01/) (that uses SIMD for multiple comparions at once) or even using a better algorithm (multi-threaded friendly) is a topic of ongoing active research.
