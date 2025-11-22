@@ -144,9 +144,9 @@ static void parseCommandLine(int nArgs, const char* aArgs[])
             ||  (strcmp(pArg, "-height") == 0)) {
                 iArg++;
                 if (iArg >= nArgs) {
-                    const char *ERROR = "ERROR: Grid height not specified.\ni.e.\n    -height 25\n";
+                    const char *error = "ERROR: Grid height not specified.\ni.e.\n    -height 25\n";
 #if USE_CPP_IOSTREAM
-                    std::cout << ERROR;
+                    std::cout << error;
 #else
                     printf( ERROR );
 #endif
@@ -162,11 +162,11 @@ static void parseCommandLine(int nArgs, const char* aArgs[])
             if (strcmp(pArg, "-j") == 0) {
                 iArg++;
                 if (iArg >= nArgs) {
-                    const char *ERROR = "ERROR: Number of threads not specified.\n";
+                    const char *error = "ERROR: Number of threads not specified.\n";
 #if USE_CPP_IOSTREAM
-                    std::cout << ERROR;
+                    std::cout << error;
 #else
-                    printf( "ERROR" );
+                    printf( error );
 #endif
                     exit(1);
                 }
@@ -197,11 +197,11 @@ static void parseCommandLine(int nArgs, const char* aArgs[])
             ||  (strcmp(pArg, "-width") == 0)) {
                 iArg++;
                 if (iArg >= nArgs) {
-                    const char *ERROR = "ERROR: Grid width not specified.\ni.e.\n    -width 20\n";
+                    const char *error = "ERROR: Grid width not specified.\ni.e.\n    -width 20\n";
 #if USE_CPP_IOSTREAM
-                    std::cout << ERROR;
+                    std::cout << error;
 #else
-                    printf( ERROR );
+                    printf( error );
 #endif
                     exit(1);
                 }
@@ -214,11 +214,11 @@ static void parseCommandLine(int nArgs, const char* aArgs[])
             if (strcmp(pArg, "-render") == 0) {
                 iArg++;
                 if (iArg >= nArgs) {
-                    const char *ERROR = "ERROR: First frame to render was not specified.\ni.e.\n    -render 300\n";
+                    const char *error = "ERROR: First frame to render was not specified.\ni.e.\n    -render 300\n";
 #if USE_CPP_IOSTREAM
-                    std::cout << ERROR;
+                    std::cout << error;
 #else
-                    printf( ERROR );
+                    printf( error );
 #endif
                     exit(1);
                 }
@@ -236,11 +236,11 @@ static void parseCommandLine(int nArgs, const char* aArgs[])
             if (strcmp(pArg, "-time") == 0) {
                 iArg++;
                 if (iArg >= nArgs) {
-                    const char *ERROR = "ERROR: Time to run simulation was not specified.\ni.e.\n    -time 10.0\n";
+                    const char *error = "ERROR: Time to run simulation was not specified.\ni.e.\n    -time 10.0\n";
 #if USE_CPP_IOSTREAM
-                    std::cout << ERROR;
+                    std::cout << error;
 #else
-                    printf( ERROR );
+                    printf( error );
 #endif
                     exit(1);
                 }
