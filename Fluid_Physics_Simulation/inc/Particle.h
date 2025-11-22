@@ -134,6 +134,13 @@ extern ParticleParameters g_ParticleParameters;
 	typedef std::vector<int16_t> Neighbors;
 #endif
 
+// Double-buffer pressure state so update pressures can be multi-threaded
+struct Pressure
+{
+	glm::vec3 velocity;
+	glm::vec3 acceleration;
+};
+
 class Particle
 {
 public:
@@ -142,12 +149,12 @@ public:
 	static std::vector <float>        centersX;
 	static std::vector <float>        centersY;
 	static std::vector <Particle>     particles;
+	static std::vector<Pressure>      pressures;
 
 	glm::vec3 pos;
 	glm::vec3 predictedPos;
 	
-	glm::vec3 velocity;
-	glm::vec3 acceleration;
+	Pressure pressure;
 	float density;
 	float nearDensity;
 

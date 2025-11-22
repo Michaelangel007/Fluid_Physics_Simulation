@@ -12,6 +12,7 @@ std::vector <float>        Particle::centersY;
 std::vector <float>        Particle::positions;
 std::vector <unsigned int> Particle::indices;
 std::vector <Particle>     Particle::particles;
+std::vector <Pressure>     Particle::pressures;
 
 // Spatial Partition
 std::vector <GridCol>    Particle::vSpatialPartitionGridCells(1,GridCol(1)); // [x][y][idx] = true/false
@@ -21,8 +22,10 @@ unsigned int Particle::vao = 0;
 unsigned int Particle::vbo = 0;
 unsigned int Particle::ibo = 0;
 
+const float MIN_DENSITY = 1e-4f;
+
 static glm::vec3 utilVelocityToColor(const Particle& p) {
-    float speed = glm::length(p.velocity);
+    float speed = glm::length(p.pressure.velocity);
     float scale = std::min( speed / g_ParticleParameters.MAX_SPEED, 1.f ); // Clamp color to 0.0 .. 1.0
     glm::vec3 color = glm::vec3(0.0f);
     utilColorMapping( scale, color );
@@ -79,7 +82,7 @@ glm::vec3 Particle::calculateViscosity(int iParticle) {
 #endif
 
     const float viscosityMultiplier = g_ParticleParameters.viscosityMultiplier;
-    const glm::vec3 homeVel = particles[iParticle].velocity;
+    const glm::vec3 homeVel = particles[iParticle].pressure.velocity;
 
     glm::vec3 force = glm::vec3(0.0f);
     const Neighbors& neighbors = vSpatialPartitionNeighbors[ iParticle ];
@@ -88,7 +91,7 @@ glm::vec3 Particle::calculateViscosity(int iParticle) {
         const int jNeighbor = neighbors[iNeighbor];
         const Particle neighbor = particles[jNeighbor];
         const glm::vec3 neighborPos = neighbor.pos;
-        const glm::vec3 neighborVel = neighbor.velocity;
+        const glm::vec3 neighborVel = neighbor.pressure.velocity;
 
         const glm::vec3 delta(neighborPos - particles[iParticle].pos);
         float dst = glm::length(delta);
@@ -238,17 +241,23 @@ void Particle::populate(float aspectRatio) {
     const int numCenters = g_ParticleParameters.numOfParticles;
 
     particles.clear();
+    pressures.clear();
     initSpatialPartition( numCenters, gridDim );
 
     // generating Centers
     for (int iCenter = 0; iCenter < numCenters; iCenter++) {
+        Pressure q;
+        q.velocity     = glm::vec3(0.0f);
+        q.acceleration = glm::vec3(0.0f);
+
         Particle p;
-        p.velocity = glm::vec3(0.0f);
-        p.acceleration = glm::vec3(0.0f);
+        p.pressure = q;
         p.pos = glm::vec3(centersX[iCenter], centersY[iCenter], 0.0f);
-        p.density = 0.0f;
+        p.density = MIN_DENSITY;
         p.generateParticle(aspectRatio);
+
         particles.push_back(p);
+        pressures.push_back(q);
 
         // populating cells
         addPositionToGrid( iCenter );
@@ -267,11 +276,11 @@ void Particle::updateBoundary() {
     const float nMin = g_ParticleParameters.vCollisionMinMax.x;
     const float nMax = g_ParticleParameters.vCollisionMinMax.y;
 
-         if (pos.x < nMin) pos.x = nMin, velocity.x = -velocity.x * 0.5f;
-    else if (pos.x > nMax) pos.x = nMax, velocity.x = -velocity.x * 0.5f;
+         if (pos.x < nMin) pos.x = nMin, pressure.velocity.x = -pressure.velocity.x * 0.5f;
+    else if (pos.x > nMax) pos.x = nMax, pressure.velocity.x = -pressure.velocity.x * 0.5f;
 
-         if (pos.y > nMax) pos.y = nMax, velocity.y = -velocity.y * 0.5f;
-    else if (pos.y < nMin) pos.y = nMin, velocity.y = -velocity.y * 0.5f;
+         if (pos.y > nMax) pos.y = nMax, pressure.velocity.y = -pressure.velocity.y * 0.5f;
+    else if (pos.y < nMin) pos.y = nMin, pressure.velocity.y = -pressure.velocity.y * 0.5f;
 }
 
 void Particle::updateDensities(int idx) {
@@ -291,7 +300,7 @@ void Particle::updateDensities(int idx) {
         density += kernelFarDensity(dst);
         nearDensity += kernelNearDensity(dst);
     }
-    p.density = density;
+    p.density = std::max( density, MIN_DENSITY );
     p.nearDensity = nearDensity;
 }
 
@@ -313,7 +322,7 @@ void Particle::updateParticles() {
             Particle& p = particles[i];
             int cellX, cellY;
             utilPositionToGridXY( p.pos, cellX, cellY );
-            p.pos += stepSize * p.velocity;
+            p.pos += stepSize * p.pressure.velocity;
             p.updateBoundary();
             updateCell(i, cellX, cellY);
         }
@@ -324,10 +333,12 @@ void Particle::updateParticles() {
         ZoneScopedN("update Neighbors")
     #endif
         // predict positions for density calculations
+#if USE_OPENMP
     #pragma omp parallel for
+#endif
         for (int i = 0; i < particles.size(); ++i) {
             Particle& p = particles[i];
-            p.predictedPos = p.pos + stepSize * p.velocity;
+            p.predictedPos = p.pos + stepSize * p.pressure.velocity;
             updateNeighbors(i);
         }
     }
@@ -348,15 +359,36 @@ void Particle::updateParticles() {
         ZoneScopedN("update Pressures")
     #endif
         // apply pressure force
-        for (int i = 0; i < particles.size(); ++i) {
-            Particle& p = particles[i];
-            float dens = std::max(particles[i].density, 1e-4f);
-            p.acceleration = calculatePressure(i) / dens; // findNeighbors() -> getNeighbors()
-            p.acceleration.y -= gravity;
-            p.velocity += stepSize * p.acceleration;
-            float velMag = glm::length(p.velocity);
-            // velocity clamp
-            if (velMag > maxSpeed) p.velocity = maxSpeed * p.velocity / velMag;
+#if USE_OPENMP
+    #pragma omp parallel for
+#endif
+        for (int iParticle = 0; iParticle < particles.size(); ++iParticle) {
+            const float density = particles[iParticle].density;
+            const Particle& p   = particles[iParticle];
+                  Pressure& q   = pressures[iParticle];
+
+            // Double buffer velocity since we are both reading and writing to velocity this frame.
+            // * write velocity -- updateParticles()
+            // * read  velocity -- calculatePressure() -> calculateViscosity()
+            q.acceleration = calculatePressure(iParticle) / density; // findNeighbors() -> getNeighbors()
+            q.acceleration.y -= gravity;
+            q.velocity = p.pressure.velocity + stepSize * q.acceleration;
+            const float speed = glm::length(q.velocity);
+            if (speed > maxSpeed) q.velocity = maxSpeed * q.velocity / speed;
+        }
+    }
+
+    {
+    #if PROFILE
+        ZoneScopedN("double-buffer pressure")
+    #endif
+#if USE_OPENMP
+    #pragma omp parallel for
+#endif
+        for (int iParticle = 0; iParticle < particles.size(); ++iParticle) {
+            const Pressure& q = pressures[ iParticle ];
+                  Particle& p = particles[ iParticle ];
+            p.pressure = q;
         }
     }
 }

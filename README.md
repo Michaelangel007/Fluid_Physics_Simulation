@@ -18,6 +18,7 @@ Original code by Spleen0291. Optimized, QoL and cleanup by me.
 |1-pass find neighbors| 0.825 ms | [cleanup_spatial_partition](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_spatial_partition)| 422% |
 | Multithread support | 0.407 ms | [multithread_support](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/multithread_support)            | 959% |
 | Parallel hashmap    | 0.370 ms | [parallel_hashmap](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/parallel_hashmap)                  |1065% |
+| Multithread pressure| 0.295ms  | [update_pressure](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/update_pressure)                    |1361% |
 
 # Command Line Options
 
