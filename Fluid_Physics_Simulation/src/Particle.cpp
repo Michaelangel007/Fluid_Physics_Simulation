@@ -309,6 +309,7 @@ void Particle::updateParticles() {
     ZoneScoped
 #endif
 
+    const int   nParticles   = (int)particles.size();
     const float stepSize     = g_ParticleParameters.stepSize;
     const float gravity      = g_ParticleParameters.GRAVITY_MAGNITUDE;
     const float maxSpeed     = g_ParticleParameters.MAX_SPEED;
@@ -318,13 +319,13 @@ void Particle::updateParticles() {
         ZoneScopedN("update Position")
     #endif
         // change position and cell
-        for (int i = 0; i < particles.size(); ++i) {
-            Particle& p = particles[i];
+        for (int iParticle = 0; iParticle < nParticles; ++iParticle) {
+            Particle& p = particles[iParticle];
             int cellX, cellY;
             utilPositionToGridXY( p.pos, cellX, cellY );
             p.pos += stepSize * p.pressure.velocity;
             p.updateBoundary();
-            updateCell(i, cellX, cellY);
+            updateCell(iParticle, cellX, cellY);
         }
     }
 
@@ -336,10 +337,10 @@ void Particle::updateParticles() {
 #if USE_OPENMP
     #pragma omp parallel for
 #endif
-        for (int i = 0; i < particles.size(); ++i) {
-            Particle& p = particles[i];
+        for (int iParticle = 0; iParticle < nParticles; ++iParticle) {
+            Particle& p = particles[iParticle];
             p.predictedPos = p.pos + stepSize * p.pressure.velocity;
-            updateNeighbors(i);
+            updateNeighbors(iParticle);
         }
     }
 
@@ -351,8 +352,8 @@ void Particle::updateParticles() {
 #if USE_OPENMP
     #pragma omp parallel for
 #endif
-        for (int i = 0; i < particles.size(); ++i) {
-            updateDensities(i); // findNeighbors() -> getNeighbors
+        for (int iParticle = 0; iParticle < nParticles; ++iParticle) {
+            updateDensities(iParticle); // findNeighbors() -> getNeighbors
         }
     }
 
@@ -364,7 +365,7 @@ void Particle::updateParticles() {
 #if USE_OPENMP
     #pragma omp parallel for
 #endif
-        for (int iParticle = 0; iParticle < particles.size(); ++iParticle) {
+        for (int iParticle = 0; iParticle < nParticles; ++iParticle) {
             const float density = particles[iParticle].density;
             const Particle& p   = particles[iParticle];
                   Pressure& q   = pressures[iParticle];
@@ -387,7 +388,7 @@ void Particle::updateParticles() {
 #if USE_OPENMP
     #pragma omp parallel for
 #endif
-        for (int iParticle = 0; iParticle < particles.size(); ++iParticle) {
+        for (int iParticle = 0; iParticle < nParticles; ++iParticle) {
             const Pressure& q = pressures[ iParticle ];
                   Particle& p = particles[ iParticle ];
             p.pressure = q;
