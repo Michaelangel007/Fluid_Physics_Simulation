@@ -5,7 +5,22 @@
 #include <GLM/gtc/type_ptr.hpp>
 #include <glm/gtc/random.hpp>
 #include <stdint.h>
-#include <unordered_map>
+#if USE_PARALLEL_HASH_MAP
+    #define CUSTOM_HASH_MAP 1
+    #define HASH_MAP_TYPE "phmap::flat_hash_map"
+    #include <phmap.h>
+    using phmap::flat_hash_map;
+#endif
+#if USE_ABSEIL_HASH_MAP
+    #define CUSTOM_HASH_MAP 1
+    #define HASH_MAP_TYPE "abseil::flat_hash_map"
+#endif
+
+#if !CUSTOM_HASH_MAP
+    #define HASH_MAP_TYPE "std::unordered_map"
+    #include <unordered_map>
+    using std::unordered_map;
+#endif
 #include "../inc/Window.h"
 
 #define M_PI 3.1415926535897932384626433832f
@@ -86,8 +101,16 @@ struct ParticleParameters
 };
 extern ParticleParameters g_ParticleParameters;
 
-typedef std::unordered_map<int, bool> GridOccupancy;
-typedef std::vector <GridOccupancy>   GridCol;
+#if USE_PARALLEL_HASH_MAP
+    typedef phmap::flat_hash_map<int, bool> GridOccupancy;
+#endif
+#if USE_ABSEIL_HASH_MAP
+    typedef absl::flash_hash_map<int, bool> GridOccupancy;
+#endif
+#if !CUSTOM_HASH_MAP
+    typedef std::unordered_map<int, bool> GridOccupancy;
+#endif
+    typedef std::vector <GridOccupancy>   GridCol;
 
 #if USE_FIXED_NEIGHBORS_SIZE
 	struct Neighbors

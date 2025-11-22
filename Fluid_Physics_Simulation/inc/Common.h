@@ -9,7 +9,8 @@
 //#define PROFILE_NEIGHBORS       1
 #define USE_CPP_IOSTREAM        1
 #define _CRT_SECURE_NO_WARNINGS 1
-#define USE_OPENMP 1
+#define USE_OPENMP              1
+#define USE_PARALLEL_HASH_MAP   1
 
 #if PROFILE
     #define TRACY_ENABLE 1

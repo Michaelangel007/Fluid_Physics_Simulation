@@ -599,6 +599,7 @@ int main(int numArgs, const char *aArgs[])
                         "(C printf)\n"
 #endif
         "    Multi-threading: %d / %d\n"
+        "    Hash map: " HASH_MAP_TYPE "\n"
         "    First Render Frame: # %s\n"
         "    Last Physics Seconds: %7.3f\n"
         "    Create Particles: %d x %d %s"
