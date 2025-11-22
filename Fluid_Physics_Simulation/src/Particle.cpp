@@ -348,7 +348,9 @@ void Particle::updateParticles() {
         ZoneScopedN("update Densities")
     #endif
         // calculate densities
+#if USE_OPENMP
     #pragma omp parallel for
+#endif
         for (int i = 0; i < particles.size(); ++i) {
             updateDensities(i); // findNeighbors() -> getNeighbors
         }
