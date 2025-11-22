@@ -321,11 +321,11 @@ void Particle::updateParticles() {
         // change position and cell
         for (int iParticle = 0; iParticle < nParticles; ++iParticle) {
             Particle& p = particles[iParticle];
-            int cellX, cellY;
-            utilPositionToGridXY( p.pos, cellX, cellY );
+            int iPrevCellX, iPrevCellY;
+            utilPositionToGridXY( p.pos, iPrevCellX, iPrevCellY );
             p.pos += stepSize * p.pressure.velocity;
             p.updateBoundary();
-            updateCell(iParticle, cellX, cellY);
+            updateCell(iParticle, iPrevCellX, iPrevCellY);
         }
     }
 
