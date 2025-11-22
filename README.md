@@ -229,3 +229,9 @@ void Particle::updateParticles() {
 ```
 * Our timing with -`j 16` is now 0.407 ms or a whopping 959% faster!
 * Replacing the heart of the Spatial Partition's `std::unordered_map` with a [more performant one](https://martin.ankerl.com/2022/08/27/hashmap-bench-01/) (that uses SIMD for multiple comparions at once) or even using a better algorithm (multi-threaded friendly) is a topic of ongoing active research.
+* Adding support [parallel_hashmap](https://github.com/greg7mdp/parallel-hashmap) is literally a drop-in replacement.
+  * Copy parallel-hashmap/parallel_hashmap to our lib/parallel_hashmap
+  * Add lib\parallel_hashmap\ to Solution > Configuration Properties > C/C++ > General > Additional Include Directories: `$(SolutionDir)lib\parallel_hashmap\;`
+  * `#include <phmap.h>`
+  * Add define to switch from `typedef std::vector <GridOccupancy>   GridCol;` to `typedef phmap::flat_hash_map<int, bool> GridOccupancy;`
+* Our timing with `j 16` isn now 0.370 ms or 1065% faster!
