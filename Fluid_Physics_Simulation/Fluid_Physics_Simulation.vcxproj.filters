@@ -32,16 +32,16 @@
     <None Include="res\shaders\Basic.shader" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="HeaderFiles\Particle.h">
+    <ClInclude Include="inc\Particle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HeaderFiles\Shaders.h">
+    <ClInclude Include="inc\Shaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HeaderFiles\Window.h">
+    <ClInclude Include="inc\Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HeaderFiles\Common.h">
+    <ClInclude Include="inc\Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

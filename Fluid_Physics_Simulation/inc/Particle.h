@@ -1,12 +1,12 @@
 #pragma once
-#include "../HeaderFiles/Common.h"
+#include "../inc/Common.h"
 
 #include <GLM/gtc/matrix_transform.hpp>
 #include <GLM/gtc/type_ptr.hpp>
 #include <glm/gtc/random.hpp>
 #include <stdint.h>
 #include <unordered_map>
-#include "../HeaderFiles/Window.h"
+#include "../inc/Window.h"
 
 #define M_PI 3.1415926535897932384626433832f
 

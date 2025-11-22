@@ -1,5 +1,5 @@
 #pragma once
-#include "../HeaderFiles/Common.h"
+#include "../inc/Common.h"
 
 extern const char  *APP_NAME;
 

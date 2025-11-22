@@ -1,5 +1,5 @@
 #pragma once
-#include "../HeaderFiles/Common.h"
+#include "../inc/Common.h"
 
 #include <fstream>
 #include <string>

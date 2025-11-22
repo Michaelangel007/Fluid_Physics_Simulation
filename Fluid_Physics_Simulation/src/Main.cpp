@@ -1,8 +1,8 @@
-#include "../HeaderFiles/Common.h"
+#include "../inc/Common.h"
 
-#include "../HeaderFiles/Shaders.h"
-#include "../HeaderFiles/Particle.h"
-#include "../HeaderFiles/Window.h"
+#include "../inc/Shaders.h"
+#include "../inc/Particle.h"
+#include "../inc/Window.h"
 #include <cmath>
 #include <limits> // MAX_INT
 

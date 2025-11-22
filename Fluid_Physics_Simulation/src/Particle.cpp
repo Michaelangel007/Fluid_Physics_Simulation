@@ -1,4 +1,4 @@
-#include "../HeaderFiles/Particle.h"
+#include "../inc/Particle.h"
 
 #if PROFILE_NEIGHBORS
     int g_nMaxNeighbors = 0;

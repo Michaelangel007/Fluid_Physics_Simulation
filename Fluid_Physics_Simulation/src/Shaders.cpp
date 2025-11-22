@@ -1,5 +1,5 @@
-#include "../HeaderFiles/Common.h"
-#include "../HeaderFiles/Shaders.h"
+#include "../inc/Common.h"
+#include "../inc/Shaders.h"
 
 struct shaderProgramSource
 {

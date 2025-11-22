@@ -1,4 +1,4 @@
-#include "../HeaderFiles/Window.h"
+#include "../inc/Window.h"
 
 //Defining static members
 GLuint Window::vao = 0;
