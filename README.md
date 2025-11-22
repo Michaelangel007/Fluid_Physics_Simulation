@@ -239,16 +239,13 @@ void Particle::updateParticles() {
   * velocity is written in updateParticles()
   * velocity is read in calculatePressure() -> calculateViscosity()
   * Solution is to double-buffer the velocity. Technically we only need `velocity` but we can also add acceleration for some minor cleanup.
-
 ```c++
-```
 struct Pressure
 {
 	glm::vec3 velocity;
 	glm::vec3 acceleration;
 };
 ```
-
   * We also need to our buffer in `class Particle`:
 ```c++
 	static std::vector<Pressure>      pressures;
