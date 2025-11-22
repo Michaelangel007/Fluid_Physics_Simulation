@@ -30,6 +30,10 @@ static glm::vec3 utilVelocityToColor(const Particle& p) {
 }
 
 glm::vec3 Particle::calculatePressure(int idx) {
+#if PROFILE
+    ZoneScoped
+#endif
+
     const float targetDensity          = g_ParticleParameters.targetDensity;
     const float pressureMultiplier     = g_ParticleParameters.pressureMultiplier;
     const float nearPressureMultiplier = g_ParticleParameters.nearPressureMultiplier;
@@ -70,6 +74,10 @@ glm::vec3 Particle::calculatePressure(int idx) {
 }
 
 glm::vec3 Particle::calculateViscosity(int iParticle) {
+#if PROFILE
+    ZoneScoped
+#endif
+
     const float viscosityMultiplier = g_ParticleParameters.viscosityMultiplier;
     const glm::vec3 homeVel = particles[iParticle].velocity;
 
@@ -252,6 +260,10 @@ void Particle::reset(float aspectRatio) {
 }
 
 void Particle::updateBoundary() {
+#if PROFILE
+    ZoneScoped
+#endif
+
     const float nMin = g_ParticleParameters.vCollisionMinMax.x;
     const float nMax = g_ParticleParameters.vCollisionMinMax.y;
 
@@ -284,49 +296,77 @@ void Particle::updateDensities(int idx) {
 }
 
 void Particle::updateParticles() {
+#if PROFILE
+    ZoneScoped
+#endif
+
     const float stepSize     = g_ParticleParameters.stepSize;
     const float gravity      = g_ParticleParameters.GRAVITY_MAGNITUDE;
     const float maxSpeed     = g_ParticleParameters.MAX_SPEED;
 
-    // change position and cell
-    for (int i = 0; i < particles.size(); ++i) {
-        Particle& p = particles[i];
-        int cellX, cellY;
-        utilPositionToGridXY( p.pos, cellX, cellY );
-        p.pos += stepSize * p.velocity;
-        p.updateBoundary();
-        updateCell(i, cellX, cellY);
+    {
+    #if PROFILE
+        ZoneScopedN("update Position")
+    #endif
+        // change position and cell
+        for (int i = 0; i < particles.size(); ++i) {
+            Particle& p = particles[i];
+            int cellX, cellY;
+            utilPositionToGridXY( p.pos, cellX, cellY );
+            p.pos += stepSize * p.velocity;
+            p.updateBoundary();
+            updateCell(i, cellX, cellY);
+        }
     }
 
-    // predict positions for density calculations
-#pragma omp parallel for
-    for (int i = 0; i < particles.size(); ++i) {
-        Particle& p = particles[i];
-        p.predictedPos = p.pos + stepSize * p.velocity;
-        updateNeighbors(i);
+    {
+    #if PROFILE
+        ZoneScopedN("update Neighbors")
+    #endif
+        // predict positions for density calculations
+    #pragma omp parallel for
+        for (int i = 0; i < particles.size(); ++i) {
+            Particle& p = particles[i];
+            p.predictedPos = p.pos + stepSize * p.velocity;
+            updateNeighbors(i);
+        }
     }
 
-    // calculate densities
-#pragma omp parallel for
-    for (int i = 0; i < particles.size(); ++i) {
-        updateDensities(i); // findNeighbors() -> getNeighbors
+    {
+    #if PROFILE
+        ZoneScopedN("update Densities")
+    #endif
+        // calculate densities
+    #pragma omp parallel for
+        for (int i = 0; i < particles.size(); ++i) {
+            updateDensities(i); // findNeighbors() -> getNeighbors
+        }
     }
 
-    // apply pressure force
-    for (int i = 0; i < particles.size(); ++i) {
-        Particle& p = particles[i];
-        float dens = std::max(particles[i].density, 1e-4f);
-        p.acceleration = calculatePressure(i) / dens; // findNeighbors() -> getNeighbors()
-        p.acceleration.y -= gravity;
-        p.velocity += stepSize * p.acceleration;
-        float velMag = glm::length(p.velocity);
-        // velocity clamp
-        if (velMag > maxSpeed) p.velocity = maxSpeed * p.velocity / velMag;
+    {
+    #if PROFILE
+        ZoneScopedN("update Pressures")
+    #endif
+        // apply pressure force
+        for (int i = 0; i < particles.size(); ++i) {
+            Particle& p = particles[i];
+            float dens = std::max(particles[i].density, 1e-4f);
+            p.acceleration = calculatePressure(i) / dens; // findNeighbors() -> getNeighbors()
+            p.acceleration.y -= gravity;
+            p.velocity += stepSize * p.acceleration;
+            float velMag = glm::length(p.velocity);
+            // velocity clamp
+            if (velMag > maxSpeed) p.velocity = maxSpeed * p.velocity / velMag;
+        }
     }
 }
 
 // Spatial Partitioning
 void Particle::addPositionToGrid(const int iParticle) {
+#if PROFILE
+    ZoneScoped
+#endif
+
     const glm::vec3 vPosition = particles[iParticle].pos;
     int cellX, cellY;
     utilPositionToGridXY( vPosition, cellX, cellY );
@@ -345,6 +385,10 @@ void Particle::initSpatialPartition(const int nParticles, const int nGridDim) {
 }
 
 void Particle::updateNeighbors(const int iParticle) {
+#if PROFILE
+    ZoneScoped
+#endif
+
     Particle& p = particles[iParticle];
     int cellX, cellY;
     utilPositionToGridXY( p.pos, cellX, cellY );
@@ -363,6 +407,10 @@ void Particle::updateNeighbors(const int iParticle) {
 }
 
 void Particle::updateCell(const int iParticle, const int iPrevCol, const int iPrevRow) {
+#if PROFILE
+    ZoneScoped
+#endif
+
     vSpatialPartitionGridCells[iPrevCol][iPrevRow][iParticle] = false;
     addPositionToGrid( iParticle );
 }

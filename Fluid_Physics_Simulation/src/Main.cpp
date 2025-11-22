@@ -6,6 +6,10 @@
 #include <cmath>
 #include <limits> // MAX_INT
 
+#if PROFILE
+    #include <TracyClient.cpp>
+#endif
+
        const char  *APP_NAME     = "Fluid Physics Simulation";
 static const char  *APP_VERSION  = "Version 1.8";
 
@@ -530,6 +534,10 @@ void ThreadsDefault() {
 
 int main(int numArgs, const char *aArgs[])
 {
+#if PROFILE
+    ZoneScoped;
+#endif
+
     char output[1024];
 
     ThreadsDefault();
@@ -624,6 +632,10 @@ int main(int numArgs, const char *aArgs[])
 
     while (!glfwWindowShouldClose(pWindow))
     {
+#if PROFILE
+        FrameMark;
+#endif
+
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
