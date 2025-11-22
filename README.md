@@ -18,7 +18,7 @@ Original code by Spleen0291. Optimized, QoL and cleanup by me.
 |1-pass find neighbors| 0.825 ms | [cleanup_spatial_partition](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/cleanup_spatial_partition)| 422% |
 | Multithread support | 0.407 ms | [multithread_support](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/multithread_support)            | 959% |
 | Parallel hashmap    | 0.370 ms | [parallel_hashmap](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/parallel_hashmap)                  |1065% |
-| Multithread pressure| 0.295ms  | [update_pressure](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/update_pressure)                    |1361% |
+| Multithread pressure| 0.295 ms | [update_pressure](https://github.com/Michaelangel007/Fluid_Physics_Simulation/tree/update_pressure)                    |1361% |
 
 # Command Line Options
 
@@ -234,4 +234,52 @@ void Particle::updateParticles() {
   * Add lib\parallel_hashmap\ to Solution > Configuration Properties > C/C++ > General > Additional Include Directories: `$(SolutionDir)lib\parallel_hashmap\;`
   * `#include <phmap.h>`
   * Add define to switch from `typedef std::vector <GridOccupancy>   GridCol;` to `typedef phmap::flat_hash_map<int, bool> GridOccupancy;`
-* Our timing with `j 16` isn now 0.370 ms or 1065% faster!
+* Our timing with `-j 16` is now 0.370 ms or 1065% faster!
+* We can't multithread update pressures since we are both reading and writing a particle's velocity in the same frame.
+  * velocity is written in updateParticles()
+  * velocity is read in calculatePressure() -> calculateViscosity()
+  * Solution is to double-buffer the velocity. Technically we only need `velocity` but we can also add acceleration for some minor cleanup.
+
+```c++
+```
+struct Pressure
+{
+	glm::vec3 velocity;
+	glm::vec3 acceleration;
+};
+```
+
+  * We also need to our buffer in `class Particle`:
+```c++
+	static std::vector<Pressure>      pressures;
+
+	Pressure pressure;
+```
+  * We can now turn on OpenMP for the update pressure loop
+```c++
+    #pragma omp parallel for
+#endif
+        for (int iParticle = 0; iParticle < particles.size(); ++iParticle) {
+            const float density = particles[iParticle].density;
+            const Particle& p   = particles[iParticle];
+                  Pressure& q   = pressures[iParticle];
+
+            // Double buffer velocity since we are both reading and writing to velocity this frame.
+            // * write velocity -- updateParticles()
+            // * read  velocity -- calculatePressure() -> calculateViscosity()
+            q.acceleration = calculatePressure(iParticle) / density; // findNeighbors() -> getNeighbors()
+            q.acceleration.y -= gravity;
+            q.velocity = p.pressure.velocity + stepSize * q.acceleration;
+```
+
+  * Lastly we also need to update the particle's velocity at the end of the physics update.
+```c++
+    #pragma omp parallel for
+#endif
+        for (int iParticle = 0; iParticle < particles.size(); ++iParticle) {
+            const Pressure& q = pressures[ iParticle ];
+                  Particle& p = particles[ iParticle ];
+            p.pressure = q;
+        }
+```
+  * Our timing with `-j 16` is now 0.295 ms or 1361% faster!
