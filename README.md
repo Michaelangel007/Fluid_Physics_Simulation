@@ -255,7 +255,6 @@ struct Pressure
   * We can now turn on OpenMP for the update pressure loop
 ```c++
     #pragma omp parallel for
-#endif
         for (int iParticle = 0; iParticle < particles.size(); ++iParticle) {
             const float density = particles[iParticle].density;
             const Particle& p   = particles[iParticle];
@@ -272,7 +271,6 @@ struct Pressure
   * Lastly we also need to update the particle's velocity at the end of the physics update.
 ```c++
     #pragma omp parallel for
-#endif
         for (int iParticle = 0; iParticle < particles.size(); ++iParticle) {
             const Pressure& q = pressures[ iParticle ];
                   Particle& p = particles[ iParticle ];
